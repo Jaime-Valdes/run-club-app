@@ -1,0 +1,103 @@
+.home-header {
+  margin-bottom: 28px;
+  text-align: center;
+  padding: 32px 0 8px;
+}
+
+.home-logo {
+  font-size: 52px;
+  margin-bottom: 12px;
+}
+
+.home-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  letter-spacing: -0.5px;
+}
+
+.home-subtitle {
+  color: var(--muted);
+  font-size: 15px;
+  margin-top: 4px;
+}
+
+.start-btn {
+  display: block;
+  width: 100%;
+  padding: 18px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  box-shadow: 0 6px 24px var(--primary-glow);
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  margin-bottom: 32px;
+}
+
+.start-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px var(--primary-glow);
+}
+
+.sessions-section { flex: 1; }
+
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+.session-list {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow-y: auto;
+  max-height: calc(100vh - 320px);
+  border: 1px solid var(--border);
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.session-item:last-child { border-bottom: none; }
+.session-item:hover { background: var(--bg); }
+
+.session-title {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.session-meta {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.session-chevron {
+  font-size: 22px;
+  color: var(--border);
+  flex-shrink: 0;
+}
+
+.muted { color: var(--muted); font-size: 14px; }
+
+.no-club { text-align: center; padding: 60px 20px; }
+.no-club-icon { font-size: 48px; margin-bottom: 16px; }
+.no-club h2 { font-size: 22px; margin-bottom: 8px; }
+.no-club p { color: var(--muted); font-size: 15px; }
+.page-loading { text-align: center; padding: 60px; color: var(--muted); }

@@ -1,0 +1,145 @@
+.sci {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.sci-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sci-logo {
+  font-size: 40px;
+  margin-bottom: 6px;
+}
+
+.sci-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+
+.sci-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.sci-instructions {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.sci-success-banner {
+  background: rgba(42, 157, 92, 0.12);
+  color: var(--success);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.sci-search {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 16px;
+  background: var(--card);
+  margin-bottom: 12px;
+  outline: none;
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+}
+
+.sci-search:focus {
+  border-color: var(--primary);
+}
+
+.sci-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sci-member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  box-shadow: var(--shadow);
+  text-align: left;
+  width: 100%;
+  transition: all 0.15s;
+}
+
+.sci-member.checked {
+  background: rgba(87, 6, 140, 0.07);
+  border-color: var(--primary);
+}
+
+.sci-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sci-member.checked .sci-avatar {
+  background: var(--success);
+}
+
+.sci-name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sci-check {
+  font-size: 18px;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.sci-empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 32px;
+  font-size: 15px;
+}
+
+.sci-loading {
+  text-align: center;
+  padding: 80px;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.sci-error {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--muted);
+}
+
+.sci-error-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
