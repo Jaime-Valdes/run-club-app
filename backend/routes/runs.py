@@ -6,9 +6,10 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 
 
 @router.post("/", response_model=RunResponse, status_code=201)
-def create_run(run: RunCreate, created_by: str):
-    data = run.model_dump()
-    data["created_by"] = created_by
+def create_run(run: RunCreate, created_by: str = None):
+    data = run.model_dump(mode="json")
+    if created_by:
+        data["created_by"] = created_by
     result = supabase.table("runs").insert(data).execute()
     if not result.data:
         raise HTTPException(status_code=400, detail="Failed to create run")

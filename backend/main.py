@@ -1,10 +1,12 @@
 """FastAPI application for Run Club backend."""
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from postgrest.exceptions import APIError
 from config import settings
 
-from routes import users_router, runs_router, attendance_router
+from routes import users_router, clubs_router, runs_router, attendance_router
 
 app = FastAPI(
     title="Run Club API",
@@ -15,11 +17,19 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.debug else ["http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(APIError)
+async def postgrest_error_handler(request: Request, exc: APIError):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.message, "code": exc.code},
+    )
 
 
 @app.get("/")
@@ -35,6 +45,7 @@ def health_check():
 
 
 app.include_router(users_router)
+app.include_router(clubs_router)
 app.include_router(runs_router)
 app.include_router(attendance_router)
 

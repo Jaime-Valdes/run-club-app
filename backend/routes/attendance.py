@@ -43,7 +43,7 @@ def get_attendance_for_user(user_id: str):
     """Get all runs a specific user has attended."""
     result = (
         supabase.table("attendance")
-        .select("*, runs(id, title, date, distance_km)")
+        .select("*, runs(id, title, date, notes)")
         .eq("user_id", user_id)
         .order("checked_in_at", desc=True)
         .execute()

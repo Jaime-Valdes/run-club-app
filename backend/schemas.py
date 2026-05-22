@@ -34,17 +34,32 @@ class ClubBase(BaseModel):
 
 
 class ClubCreate(ClubBase):
-    """Schema for creating a club."""
-    pass
+    owner_id: Optional[str] = None
 
 
 class ClubResponse(ClubBase):
-    """Schema for club response."""
     id: str
-    owner_id: str
+    owner_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    
+
+    class Config:
+        from_attributes = True
+
+
+class ClubMemberCreate(BaseModel):
+    club_id: str
+    user_id: str
+    role: str = "member"
+
+
+class ClubMemberResponse(BaseModel):
+    id: str
+    club_id: str
+    user_id: str
+    role: str
+    joined_at: datetime
+
     class Config:
         from_attributes = True
 
@@ -52,10 +67,8 @@ class ClubResponse(ClubBase):
 class RunBase(BaseModel):
     """Base run schema."""
     title: str
-    description: Optional[str] = None
     date: datetime
-    distance_km: float
-    pace: str
+    notes: Optional[str] = None
 
 
 class RunCreate(RunBase):
@@ -67,7 +80,7 @@ class RunResponse(RunBase):
     """Schema for run response."""
     id: str
     club_id: str
-    created_by: str
+    created_by: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
