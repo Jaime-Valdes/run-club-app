@@ -10,3 +10,7 @@ export const getAttendanceForUser = (userId) =>
   api.get(`/attendance/user/${userId}`);
 export const getAttendanceCount = (userId) =>
   api.get(`/attendance/user/${userId}/count`);
+export const getAllAttendanceCounts = () =>
+  api.get("/attendance/counts");
+export const getAllAttendanceForClub = (clubId) =>
+  api.get(`/attendance/all?club_id=${clubId}`);

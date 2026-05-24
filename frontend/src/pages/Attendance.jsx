@@ -10,6 +10,11 @@ import "./Attendance.css";
 
 const RACE_DISTANCES = ["5k", "10k", "Half Marathon", "XC", "Track Meet"];
 
+const networkHost = import.meta.env.VITE_NETWORK_HOST;
+const checkInOrigin = networkHost
+  ? `${window.location.protocol}//${networkHost}:${window.location.port}`
+  : window.location.origin;
+
 export default function Attendance() {
   const { club } = useClub();
   const navigate = useNavigate();
@@ -299,12 +304,12 @@ export default function Attendance() {
           <div className="qr-card card">
             <div className="qr-label">Members can scan to check themselves in</div>
             <QRCodeSVG
-              value={`${window.location.origin}/selfcheckin?run_id=${activeRun.id}`}
+              value={`${checkInOrigin}/selfcheckin?run_id=${activeRun.id}`}
               size={160}
               fgColor="#57068c"
               level="M"
             />
-            <div className="qr-url">{window.location.origin}/selfcheckin</div>
+            <div className="qr-url">{checkInOrigin}/selfcheckin</div>
           </div>
 
           <input

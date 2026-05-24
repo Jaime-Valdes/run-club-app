@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useClub } from "../context/ClubContext";
 import { getUsers } from "../api/users";
 import { getRuns } from "../api/runs";
-import { getAttendanceForRun, getAttendanceCount, getAttendanceForUser } from "../api/attendance";
+import { getAttendanceForRun, getAttendanceForUser, getAllAttendanceForClub } from "../api/attendance";
 import { getUserResults, saveResult } from "../api/races";
 import "./Records.css";
 
@@ -48,46 +48,43 @@ export default function Records() {
     return d.toISOString().slice(0, 10);
   });
   const [sortEnd, setSortEnd] = useState(() => new Date().toISOString().slice(0, 10));
+  const [allAttendance, setAllAttendance] = useState([]);
   const [rangeStats, setRangeStats] = useState({});
-  const [rangeLoading, setRangeLoading] = useState(false);
 
   useEffect(() => {
     if (!club) return;
-    Promise.all([getUsers(), getRuns(club.id)])
-      .then(async ([users, runsData]) => {
+    Promise.all([getUsers(), getRuns(club.id), getAllAttendanceForClub(club.id)])
+      .then(([users, runsData, rawAttendance]) => {
         setMembers(users);
         setRuns(runsData);
-        const counts = await Promise.all(
-          users.map((u) => getAttendanceCount(u.id).then((r) => ({ id: u.id, count: r.total_attended })))
-        );
+        setAllAttendance(rawAttendance);
+
         const statsMap = {};
-        counts.forEach(({ id, count }) => { statsMap[id] = count; });
+        rawAttendance.forEach((rec) => {
+          statsMap[rec.user_id] = (statsMap[rec.user_id] || 0) + 1;
+        });
         setMemberStats(statsMap);
 
         const weekStart = getStartOf("week");
-        const thisWeekRuns = runsData.filter((r) => new Date(r.date) >= weekStart);
-        if (thisWeekRuns.length > 0) {
-          const weekAttendance = await Promise.all(thisWeekRuns.map((r) => getAttendanceForRun(r.id)));
-          setWeekCheckIns(weekAttendance.reduce((sum, a) => sum + a.length, 0));
-        }
+        const weekRunIds = new Set(runsData.filter((r) => new Date(r.date) >= weekStart).map((r) => r.id));
+        setWeekCheckIns(rawAttendance.filter((rec) => weekRunIds.has(rec.run_id)).length);
       })
       .finally(() => setLoading(false));
   }, [club]);
 
   useEffect(() => {
-    if (!sortModes.includes("range") || !sortStart || !sortEnd || runs.length === 0) return;
-    setRangeLoading(true);
+    if (!sortModes.includes("range") || !sortStart || !sortEnd || allAttendance.length === 0) return;
     const start = new Date(sortStart);
     const end = new Date(sortEnd + "T23:59:59");
-    const rangeRuns = runs.filter((r) => { const d = new Date(r.date); return d >= start && d <= end; });
-    if (rangeRuns.length === 0) { setRangeStats({}); setRangeLoading(false); return; }
-    Promise.all(rangeRuns.map((r) => getAttendanceForRun(r.id))).then((results) => {
-      const stats = {};
-      results.forEach((records) => { records.forEach((rec) => { stats[rec.user_id] = (stats[rec.user_id] || 0) + 1; }); });
-      setRangeStats(stats);
-      setRangeLoading(false);
+    const rangeRunIds = new Set(
+      runs.filter((r) => { const d = new Date(r.date); return d >= start && d <= end; }).map((r) => r.id)
+    );
+    const stats = {};
+    allAttendance.filter((rec) => rangeRunIds.has(rec.run_id)).forEach((rec) => {
+      stats[rec.user_id] = (stats[rec.user_id] || 0) + 1;
     });
-  }, [sortModes, sortStart, sortEnd, runs]);
+    setRangeStats(stats);
+  }, [sortModes, sortStart, sortEnd, runs, allAttendance]);
 
   function toggleSort(mode) {
     setSortModes((prev) => prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]);
@@ -349,7 +346,6 @@ export default function Records() {
                 value={sortEnd}
                 onChange={(e) => setSortEnd(e.target.value)}
               />
-              {rangeLoading && <span className="range-loading">Loading…</span>}
             </div>
           )}
 

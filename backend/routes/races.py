@@ -29,6 +29,28 @@ def list_races(club_id: str):
     return result.data
 
 
+@router.get("/all-results", response_model=list[Any])
+def get_all_race_results(club_id: str):
+    """All race_results for a club in one query."""
+    races_res = supabase.table("races").select("id").eq("club_id", club_id).execute()
+    race_ids = [r["id"] for r in races_res.data]
+    if not race_ids:
+        return []
+    result = supabase.table("race_results").select("user_id, race_id, time_display").in_("race_id", race_ids).execute()
+    return result.data
+
+
+@router.get("/all-track-results", response_model=list[Any])
+def get_all_track_results(club_id: str):
+    """All track_results for a club in one query."""
+    races_res = supabase.table("races").select("id").eq("club_id", club_id).eq("race_type", "track").execute()
+    race_ids = [r["id"] for r in races_res.data]
+    if not race_ids:
+        return []
+    result = supabase.table("track_results").select("user_id, race_id, event, result_display").in_("race_id", race_ids).execute()
+    return result.data
+
+
 @router.get("/{race_id}", response_model=RaceResponse)
 def get_race(race_id: str):
     result = supabase.table("races").select("*").eq("id", race_id).execute()

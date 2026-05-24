@@ -12,6 +12,7 @@ export default function SelfCheckIn() {
   const [attendees, setAttendees] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [runTitle, setRunTitle] = useState("");
   const [justCheckedIn, setJustCheckedIn] = useState(null);
 
@@ -20,13 +21,14 @@ export default function SelfCheckIn() {
     Promise.all([
       getUsers(),
       getAttendanceForRun(runId),
-      fetch(`${import.meta.env.VITE_API_URL}/runs/${runId}`).then((r) => r.json()),
+      fetch(`/runs/${runId}`).then((r) => r.json()),
     ])
       .then(([users, records, run]) => {
         setMembers(users);
         setAttendees(records.map((r) => r.user_id));
         setRunTitle(run.title || "Practice");
       })
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [runId]);
 
@@ -57,6 +59,7 @@ export default function SelfCheckIn() {
   }
 
   if (loading) return <div className="sci-loading">Loading...</div>;
+  if (error) return <div className="sci-error"><div className="sci-error-icon">⚠️</div><p>{error}</p></div>;
 
   return (
     <div className="sci">

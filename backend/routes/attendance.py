@@ -61,3 +61,25 @@ def get_attendance_count(user_id: str):
         .execute()
     )
     return {"user_id": user_id, "total_attended": result.count}
+
+
+@router.get("/counts")
+def get_all_attendance_counts():
+    """Get attendance counts for all users in a single query."""
+    result = supabase.table("attendance").select("user_id").execute()
+    counts = {}
+    for row in result.data:
+        uid = row["user_id"]
+        counts[uid] = counts.get(uid, 0) + 1
+    return counts
+
+
+@router.get("/all")
+def get_all_attendance(club_id: str):
+    """All attendance records for a club (user_id + run_id) in one query."""
+    runs_res = supabase.table("runs").select("id").eq("club_id", club_id).execute()
+    run_ids = [r["id"] for r in runs_res.data]
+    if not run_ids:
+        return []
+    result = supabase.table("attendance").select("user_id, run_id").in_("run_id", run_ids).execute()
+    return result.data

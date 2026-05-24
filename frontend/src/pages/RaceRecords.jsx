@@ -7,8 +7,9 @@ import {
 import { useClub } from "../context/ClubContext";
 import { getUsers, updateUser } from "../api/users";
 import {
-  getRaces, getResults, getUserResults, saveResult,
+  getRaces, getUserResults, saveResult,
   getTrackResults, getUserTrackResults, saveTrackResult, deleteTrackResult,
+  getAllResultsForClub, getAllTrackResultsForClub,
 } from "../api/races";
 import "./Records.css";
 
@@ -298,49 +299,42 @@ export default function RaceRecords() {
         setRaces(racesData);
         if (racesData.length === 0) return;
 
-        const trackMeets = racesData.filter((r) => r.race_type === "track");
+        const raceMap = Object.fromEntries(racesData.map((r) => [r.id, r]));
 
-        const [allResults, ...allTrackResultsArr] = await Promise.all([
-          Promise.all(racesData.map((r) => getResults(r.id))),
-          ...trackMeets.map((r) => getTrackResults(r.id)),
+        const [allResultsRaw, allTrackResultsRaw] = await Promise.all([
+          getAllResultsForClub(club.id),
+          getAllTrackResultsForClub(club.id),
         ]);
 
-        // trackResultsByRaceUser[race_id][user_id] = # results with result_display
         const trackResultsByRaceUser = {};
-        trackMeets.forEach((race, i) => {
-          trackResultsByRaceUser[race.id] = {};
-          allTrackResultsArr[i].forEach((tr) => {
-            if (!trackResultsByRaceUser[race.id][tr.user_id]) trackResultsByRaceUser[race.id][tr.user_id] = 0;
-            if (tr.result_display) trackResultsByRaceUser[race.id][tr.user_id]++;
-          });
+        allTrackResultsRaw.forEach((tr) => {
+          if (!trackResultsByRaceUser[tr.race_id]) trackResultsByRaceUser[tr.race_id] = {};
+          if (!trackResultsByRaceUser[tr.race_id][tr.user_id]) trackResultsByRaceUser[tr.race_id][tr.user_id] = 0;
+          if (tr.result_display) trackResultsByRaceUser[tr.race_id][tr.user_id]++;
         });
 
         const counts = {};
         const pending = {};
-        allResults.forEach((results, raceIdx) => {
-          const race = racesData[raceIdx];
-          results.forEach((res) => {
-            counts[res.user_id] = (counts[res.user_id] || 0) + 1;
-            if (race.race_type === "track") {
-              const hasResult = (trackResultsByRaceUser[race.id]?.[res.user_id] || 0) > 0;
-              if (!hasResult) pending[res.user_id] = (pending[res.user_id] || 0) + 1;
-            } else {
-              if (!res.time_display) pending[res.user_id] = (pending[res.user_id] || 0) + 1;
-            }
-          });
+        allResultsRaw.forEach((res) => {
+          const race = raceMap[res.race_id];
+          if (!race) return;
+          counts[res.user_id] = (counts[res.user_id] || 0) + 1;
+          if (race.race_type === "track") {
+            const hasResult = (trackResultsByRaceUser[race.id]?.[res.user_id] || 0) > 0;
+            if (!hasResult) pending[res.user_id] = (pending[res.user_id] || 0) + 1;
+          } else {
+            if (!res.time_display) pending[res.user_id] = (pending[res.user_id] || 0) + 1;
+          }
         });
         setMemberRaceCounts(counts);
         setMemberPendingCounts(pending);
 
-        const flat = [];
-        allResults.forEach((results, raceIdx) => {
-          const race = racesData[raceIdx];
-          if (race.race_type !== "track") results.forEach((res) => flat.push({ ...res, races: race }));
-        });
+        const flat = allResultsRaw
+          .filter((res) => raceMap[res.race_id]?.race_type !== "track")
+          .map((res) => ({ ...res, races: raceMap[res.race_id] }));
         setAllResultsFlat(flat);
 
-        const trackFlat = [];
-        trackMeets.forEach((race, i) => allTrackResultsArr[i].forEach((tr) => trackFlat.push({ ...tr, races: race })));
+        const trackFlat = allTrackResultsRaw.map((tr) => ({ ...tr, races: raceMap[tr.race_id] }));
         setAllTrackFlat(trackFlat);
       })
       .finally(() => setLoading(false));
