@@ -22,7 +22,10 @@ export default function Navbar() {
             Attendance
           </NavLink>
           <NavLink to="/records" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-            Records
+            Att. Records
+          </NavLink>
+          <NavLink to="/races" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+            Races
           </NavLink>
         </div>
       </div>

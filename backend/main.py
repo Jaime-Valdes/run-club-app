@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from postgrest.exceptions import APIError
 from config import settings
 
-from routes import users_router, clubs_router, runs_router, attendance_router
+from routes import users_router, clubs_router, runs_router, attendance_router, races_router
 
 app = FastAPI(
     title="Run Club API",
@@ -48,6 +48,7 @@ app.include_router(users_router)
 app.include_router(clubs_router)
 app.include_router(runs_router)
 app.include_router(attendance_router)
+app.include_router(races_router)
 
 
 if __name__ == "__main__":

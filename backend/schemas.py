@@ -9,6 +9,7 @@ class UserBase(BaseModel):
     """Base user schema."""
     email: EmailStr
     name: str
+    gender: Optional[str] = "man"
 
 
 class UserCreate(UserBase):
@@ -16,12 +17,17 @@ class UserCreate(UserBase):
     pass
 
 
+class UserUpdate(BaseModel):
+    """Schema for partial user update."""
+    gender: Optional[str] = None
+
+
 class UserResponse(UserBase):
     """Schema for user response."""
     id: str
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -111,3 +117,65 @@ class AttendanceWithUser(AttendanceResponse):
 
 class AttendanceWithRun(AttendanceResponse):
     runs: dict
+
+
+class RaceBase(BaseModel):
+    title: str
+    date: datetime
+    race_type: str  # 'road_xc' | 'track'
+    distance: str
+    location: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class RaceCreate(RaceBase):
+    club_id: str
+
+
+class RaceResponse(RaceBase):
+    id: str
+    club_id: str
+    created_by: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class RaceResultCreate(BaseModel):
+    race_id: str
+    user_id: str
+    time_display: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class RaceResultResponse(BaseModel):
+    id: str
+    race_id: str
+    user_id: str
+    time_display: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TrackResultCreate(BaseModel):
+    race_id: str
+    user_id: str
+    event: str
+    result_display: Optional[str] = None
+
+
+class TrackResultResponse(BaseModel):
+    id: str
+    race_id: str
+    user_id: str
+    event: str
+    result_display: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
