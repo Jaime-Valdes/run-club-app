@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/selfcheckin", "destination": "/index.html" },
+    { "source": "/attendance", "destination": "/index.html" },
+    { "source": "/records", "destination": "/index.html" },
+    { "source": "/races", "destination": "/index.html" },
+    { "source": "/race/:path*", "destination": "/index.html" }
+  ]
+}
