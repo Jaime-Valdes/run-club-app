@@ -12,7 +12,7 @@ const RACE_DISTANCES = ["5k", "10k", "Half Marathon", "XC", "Track Meet"];
 
 const networkHost = import.meta.env.VITE_NETWORK_HOST;
 const checkInOrigin = networkHost
-  ? `${window.location.protocol}//${networkHost}:${window.location.port}`
+  ? `${window.location.protocol}//${networkHost}${window.location.port ? `:${window.location.port}` : ""}`
   : window.location.origin;
 
 export default function Attendance() {
