@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getUsers } from "../api/users";
+import { getRun } from "../api/runs";
 import { checkIn, checkOut, getAttendanceForRun } from "../api/attendance";
 import "./SelfCheckIn.css";
 
@@ -21,7 +22,7 @@ export default function SelfCheckIn() {
     Promise.all([
       getUsers(),
       getAttendanceForRun(runId),
-      fetch(`/runs/${runId}`).then((r) => r.json()),
+      getRun(runId),
     ])
       .then(([users, records, run]) => {
         setMembers(users);
