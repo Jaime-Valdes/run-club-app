@@ -5,7 +5,9 @@
 }
 
 .home-logo {
-  font-size: 52px;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
   margin-bottom: 12px;
 }
 

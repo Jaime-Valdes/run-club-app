@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClub } from "../context/ClubContext";
 import { getRuns } from "../api/runs";
+import logo from "../assets/logo.svg";
 import "./Home.css";
 
 export default function Home() {
@@ -33,7 +34,7 @@ export default function Home() {
   return (
     <div className="home">
       <div className="home-header">
-        <div className="home-logo">🏃</div>
+        <img src={logo} alt="NYU Runners" className="home-logo" />
         <h1 className="home-title">NYU Run Club</h1>
         <p className="home-subtitle">New York University · Running Community</p>
       </div>
