@@ -26,7 +26,12 @@
   letter-spacing: -0.3px;
 }
 
-.navbar-icon { font-size: 22px; }
+.navbar-icon {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  filter: invert(1);
+}
 
 .navbar-links { display: flex; gap: 4px; }
 

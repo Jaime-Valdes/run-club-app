@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useClub } from "../../context/ClubContext";
+import logo from "../../assets/logo.svg";
 import "./Navbar.css";
 
 export default function Navbar() {
@@ -11,7 +12,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
         <NavLink to="/" className="navbar-brand">
-          <span className="navbar-icon">🏃</span>
+          <img src={logo} alt="" className="navbar-icon" />
           <span>{club?.name || "Run Club"}</span>
         </NavLink>
         <div className="navbar-links">
