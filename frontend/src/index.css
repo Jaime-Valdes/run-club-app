@@ -3,15 +3,18 @@
   --primary-dark: #330662;
   --primary-light: #7b2fbe;
   --primary-glow: rgba(87, 6, 140, 0.18);
-  --bg: #f7f4fa;
+  --bg: #EDD8FF;
   --card: #ffffff;
   --text: #1a1a2e;
   --muted: #6b6880;
-  --border: #e4dced;
+  --border: #ddd5e9;
   --success: #2a9d5c;
   --danger: #e03c31;
-  --radius: 14px;
-  --shadow: 0 2px 14px rgba(87, 6, 140, 0.08);
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(87, 6, 140, 0.07);
+  --grad-primary: linear-gradient(135deg, #330662 0%, #7b2fbe 100%);
+  --grad-navbar: linear-gradient(135deg, #1a0035 0%, #330662 45%, #57068c 100%);
+  --focus-ring: 0 0 0 3px rgba(87, 6, 140, 0.12);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

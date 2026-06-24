@@ -36,14 +36,15 @@
 }
 
 .sci-success-banner {
-  background: rgba(42, 157, 92, 0.12);
-  color: var(--success);
+  background: linear-gradient(135deg, #1e7a45 0%, #2a9d5c 100%);
+  color: #fff;
   font-size: 15px;
   font-weight: 600;
   padding: 12px 16px;
   border-radius: var(--radius);
   text-align: center;
   margin-bottom: 14px;
+  box-shadow: 0 4px 14px rgba(42, 157, 92, 0.28);
 }
 
 .sci-search {
@@ -57,10 +58,12 @@
   outline: none;
   box-shadow: var(--shadow);
   box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .sci-search:focus {
   border-color: var(--primary);
+  box-shadow: var(--focus-ring);
 }
 
 .sci-list {
@@ -76,15 +79,20 @@
   padding: 14px 16px;
   background: var(--card);
   border-radius: var(--radius);
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow);
   text-align: left;
   width: 100%;
   transition: all 0.15s;
 }
 
+.sci-member:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 2px 12px rgba(87, 6, 140, 0.12);
+}
+
 .sci-member.checked {
-  background: rgba(87, 6, 140, 0.07);
+  background: rgba(87, 6, 140, 0.05);
   border-color: var(--primary);
 }
 
@@ -92,7 +100,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: var(--primary);
+  background: var(--grad-primary);
   color: #fff;
   font-weight: 700;
   font-size: 16px;
@@ -103,7 +111,7 @@
 }
 
 .sci-member.checked .sci-avatar {
-  background: var(--success);
+  background: linear-gradient(135deg, #1e7a45 0%, #2a9d5c 100%);
 }
 
 .sci-name {
