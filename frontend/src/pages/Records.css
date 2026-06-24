@@ -554,6 +554,27 @@
   box-shadow: 0 2px 8px rgba(87, 6, 140, 0.22);
 }
 
+.export-btn {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1e7a45 0%, #2a9d5c 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(42, 157, 92, 0.28);
+  transition: opacity 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+.export-btn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+.export-btn:disabled {
+  opacity: 0.6;
+}
+
 .pending-count-badge {
   font-size: 11px;
   font-weight: 700;

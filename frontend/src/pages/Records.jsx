@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import * as XLSX from "xlsx";
 import { useClub } from "../context/ClubContext";
 import { getUsers } from "../api/users";
 import { getRuns } from "../api/runs";
 import { getAttendanceForRun, getAttendanceForUser, getAllAttendanceForClub } from "../api/attendance";
-import { getUserResults, saveResult } from "../api/races";
+import { getUserResults, saveResult, getAllResultsForClub } from "../api/races";
 import "./Records.css";
 
 function getStartOf(period) {
@@ -86,8 +87,44 @@ export default function Records() {
     setRangeStats(stats);
   }, [sortModes, sortStart, sortEnd, runs, allAttendance]);
 
+  const [exporting, setExporting] = useState(false);
+
   function toggleSort(mode) {
     setSortModes((prev) => prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]);
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const allResults = await getAllResultsForClub(club.id);
+      const racesPerUser = {};
+      allResults.forEach((r) => {
+        racesPerUser[r.user_id] = (racesPerUser[r.user_id] || 0) + 1;
+      });
+
+      const rows = sortedMembers.map((member) => {
+        const nameParts = member.name.trim().split(" ");
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(" ");
+        const practices = memberStats[member.id] || 0;
+        const races = racesPerUser[member.id] || 0;
+        return {
+          "First Name": firstName,
+          "Last Name": lastName,
+          "Practices Attended": practices,
+          "Races Attended": races,
+          "Total Attendances": practices + races,
+        };
+      });
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 20 }, { wch: 18 }, { wch: 20 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+      XLSX.writeFile(wb, `${club.name || "run-club"}-attendance.xlsx`);
+    } finally {
+      setExporting(false);
+    }
   }
 
   async function handleSelectRun(run) {
@@ -319,15 +356,18 @@ export default function Records() {
       {view === "members" && (
         <>
           <div className="sort-row">
-            <span className="sort-label">Sort:</span>
+            <span className="sort-label">Sort By:</span>
             <button className={`sort-pill ${sortModes.includes("total") ? "active" : ""}`} onClick={() => toggleSort("total")}>
-              Total
+              Total attendances
             </button>
             <button className={`sort-pill ${sortModes.includes("last_name") ? "active" : ""}`} onClick={() => toggleSort("last_name")}>
               Last Name
             </button>
             <button className={`sort-pill ${sortModes.includes("range") ? "active" : ""}`} onClick={() => toggleSort("range")}>
               Date Range
+            </button>
+            <button className="export-btn" onClick={handleExport} disabled={exporting}>
+              {exporting ? "Exporting…" : "⬇ Export to spreadsheet"}
             </button>
           </div>
 
