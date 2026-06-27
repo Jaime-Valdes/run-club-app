@@ -20,6 +20,14 @@ export default function SelfCheckIn() {
 
   useEffect(() => {
     if (!runId) return;
+
+    const stored = localStorage.getItem(`sci_${runId}`);
+    if (stored) {
+      setCheckedInMember(JSON.parse(stored));
+      setLoading(false);
+      return;
+    }
+
     Promise.all([getUsers(), getAttendanceForRun(runId), getRun(runId)])
       .then(([users, records, run]) => {
         setMembers(users);
@@ -37,6 +45,7 @@ export default function SelfCheckIn() {
       if (!attendees.has(member.id)) {
         await checkIn(runId, member.id);
       }
+      localStorage.setItem(`sci_${runId}`, JSON.stringify(member));
       setCheckedInMember(member);
     } catch (err) {
       setError(err.message);
