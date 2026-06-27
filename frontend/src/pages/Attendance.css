@@ -413,3 +413,16 @@
   color: var(--muted);
   font-family: monospace;
 }
+
+@media (max-width: 600px) {
+  .page-title { font-size: 22px; }
+  .form-row { grid-template-columns: 1fr; }
+  .attendance-summary { padding: 16px 12px; }
+  .summary-value { font-size: 22px; }
+  .summary-label { font-size: 10px; }
+  .tabs { flex-wrap: wrap; }
+  .member-name { font-size: 14px; }
+  .member-email { font-size: 11px; }
+  .checkin-btn { padding: 6px 10px; font-size: 12px; }
+  .submit-session-btn { font-size: 15px; padding: 14px; }
+}

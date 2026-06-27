@@ -816,3 +816,34 @@
   background: var(--grad-primary);
   color: #fff;
 }
+
+@media (max-width: 600px) {
+  .page-title { font-size: 22px; }
+
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-value { font-size: 20px; }
+  .stat-label { font-size: 10px; }
+
+  .sort-row { gap: 5px; }
+  .sort-pill { padding: 5px 11px; font-size: 12px; }
+  .export-btn { margin-left: 0; width: 100%; margin-top: 2px; text-align: center; }
+
+  .record-bar, .record-rate { display: none; }
+  .record-count { font-size: 13px; }
+  .record-name { font-size: 14px; }
+  .record-sub { font-size: 11px; }
+  .member-avatar { width: 32px; height: 32px; font-size: 13px; }
+  .rank { width: 18px; font-size: 11px; }
+
+  .range-row { gap: 6px; }
+  .range-input { min-width: 0; font-size: 13px; padding: 8px 10px; }
+
+  .member-detail-header { padding: 14px 12px; gap: 12px; }
+  .member-avatar-lg { width: 46px; height: 46px; font-size: 18px; }
+  .member-detail-name { font-size: 16px; }
+
+  .context-actions .export-btn { width: auto; margin-top: 0; }
+
+  .cr-col-event { width: 80px; }
+  .cr-record-time { font-size: 15px; }
+}

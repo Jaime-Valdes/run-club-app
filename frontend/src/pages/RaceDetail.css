@@ -261,3 +261,13 @@
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 600px) {
+  .race-title { font-size: 18px; }
+  .race-filter-row { flex-wrap: wrap; }
+  .export-btn { margin-left: 0; width: 100%; text-align: center; }
+  .result-name { font-size: 14px; }
+  .member-avatar { width: 32px; height: 32px; font-size: 13px; }
+  .time-display { font-size: 13px; }
+  .submit-session-btn { font-size: 15px; padding: 14px; }
+}
