@@ -119,9 +119,12 @@ export default function Attendance() {
     }
   }
 
-  const filteredMembers = members.filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredMembers = members
+    .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const checkedInMembers = filteredMembers.filter((m) => attendees.includes(m.id));
+  const notCheckedInMembers = filteredMembers.filter((m) => !attendees.includes(m.id));
 
   if (!club || loading) return <div className="page-loading">Loading...</div>;
 
@@ -284,7 +287,7 @@ export default function Attendance() {
             </p>
           </div>
 
-          <div className="attendance-summary card">
+          <div className="attendance-summary">
             <div className="summary-stat">
               <div className="summary-value">{attendees.length}</div>
               <div className="summary-label">Checked In</div>
@@ -323,24 +326,35 @@ export default function Attendance() {
             {filteredMembers.length === 0 ? (
               <p className="empty-state">No members found</p>
             ) : (
-              filteredMembers.map((member) => {
-                const checked = attendees.includes(member.id);
-                return (
-                  <div key={member.id} className={`member-item ${checked ? "checked" : ""}`}>
+              <>
+                {checkedInMembers.map((member) => (
+                  <div key={member.id} className="member-item checked">
                     <div className="member-avatar">{member.name[0].toUpperCase()}</div>
                     <div className="member-info">
                       <div className="member-name">{member.name}</div>
                       <div className="member-email">{member.email}</div>
                     </div>
-                    <button
-                      className={`checkin-btn ${checked ? "checked" : ""}`}
-                      onClick={() => toggleAttendance(member.id)}
-                    >
-                      {checked ? "✓ Here" : "Check In"}
+                    <button className="checkin-btn checked" onClick={() => toggleAttendance(member.id)}>
+                      ✓ Here
                     </button>
                   </div>
-                );
-              })
+                ))}
+                {checkedInMembers.length > 0 && notCheckedInMembers.length > 0 && (
+                  <div className="member-divider">Not yet checked in</div>
+                )}
+                {notCheckedInMembers.map((member) => (
+                  <div key={member.id} className="member-item">
+                    <div className="member-avatar">{member.name[0].toUpperCase()}</div>
+                    <div className="member-info">
+                      <div className="member-name">{member.name}</div>
+                      <div className="member-email">{member.email}</div>
+                    </div>
+                    <button className="checkin-btn" onClick={() => toggleAttendance(member.id)}>
+                      Check In
+                    </button>
+                  </div>
+                ))}
+              </>
             )}
           </div>
 
