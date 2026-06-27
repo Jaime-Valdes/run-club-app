@@ -1,20 +1,22 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from database import supabase
 from schemas import AttendanceCreate, AttendanceResponse, AttendanceWithUser, AttendanceWithRun
+from sheets import sync_attendance_sheet
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 
 
 @router.post("/", response_model=AttendanceResponse, status_code=201)
-def check_in(attendance: AttendanceCreate):
+def check_in(attendance: AttendanceCreate, background_tasks: BackgroundTasks):
     result = supabase.table("attendance").insert(attendance.model_dump()).execute()
     if not result.data:
         raise HTTPException(status_code=400, detail="Failed to check in")
+    background_tasks.add_task(sync_attendance_sheet)
     return result.data[0]
 
 
 @router.delete("/", status_code=204)
-def check_out(run_id: str, user_id: str):
+def check_out(run_id: str, user_id: str, background_tasks: BackgroundTasks):
     result = (
         supabase.table("attendance")
         .delete()
@@ -24,6 +26,7 @@ def check_out(run_id: str, user_id: str):
     )
     if not result.data:
         raise HTTPException(status_code=404, detail="Attendance record not found")
+    background_tasks.add_task(sync_attendance_sheet)
 
 
 @router.get("/run/{run_id}", response_model=list[AttendanceWithUser])

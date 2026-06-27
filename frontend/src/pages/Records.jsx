@@ -93,6 +93,23 @@ export default function Records() {
     setSortModes((prev) => prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]);
   }
 
+  function exportPractice() {
+    const rows = runAttendees.map((member) => {
+      const parts = member.name.trim().split(" ");
+      return {
+        "First Name": parts[0],
+        "Last Name": parts.slice(1).join(" "),
+        "Email": member.email || "",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 28 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Attendees");
+    const safeName = (selectedRun?.title || "practice").replace(/[^a-z0-9]/gi, "-").toLowerCase();
+    XLSX.writeFile(wb, `${safeName}-attendees.xlsx`);
+  }
+
   async function handleExport() {
     setExporting(true);
     try {
@@ -458,7 +475,12 @@ export default function Records() {
             </div>
           ) : (
             <>
-              <button className="back-btn" onClick={() => setSelectedRun(null)}>← All Practices</button>
+              <div className="context-actions">
+                <button className="back-btn" onClick={() => setSelectedRun(null)}>← All Practices</button>
+                {!runLoading && runAttendees.length > 0 && (
+                  <button className="export-btn" onClick={exportPractice}>⬇ Export attendees</button>
+                )}
+              </div>
               <div className="run-detail-header card">
                 <h2>{selectedRun.title}</h2>
                 <p className="run-meta">

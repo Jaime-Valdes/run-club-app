@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from typing import Any
 from database import supabase
 from schemas import RaceCreate, RaceResponse, RaceResultCreate, RaceResultResponse, TrackResultCreate, TrackResultResponse
+from sheets import sync_attendance_sheet
 
 router = APIRouter(prefix="/races", tags=["races"])
 
@@ -60,7 +61,7 @@ def get_race(race_id: str):
 
 
 @router.post("/{race_id}/results", response_model=RaceResultResponse, status_code=201)
-def save_result(race_id: str, body: RaceResultCreate):
+def save_result(race_id: str, body: RaceResultCreate, background_tasks: BackgroundTasks):
     data = body.model_dump(mode="json")
     data["race_id"] = race_id
     result = (
@@ -70,6 +71,7 @@ def save_result(race_id: str, body: RaceResultCreate):
     )
     if not result.data:
         raise HTTPException(status_code=400, detail="Failed to save result")
+    background_tasks.add_task(sync_attendance_sheet)
     return result.data[0]
 
 
@@ -85,8 +87,9 @@ def get_results(race_id: str):
 
 
 @router.delete("/{race_id}/results/{user_id}", status_code=204)
-def delete_result(race_id: str, user_id: str):
+def delete_result(race_id: str, user_id: str, background_tasks: BackgroundTasks):
     supabase.table("race_results").delete().eq("race_id", race_id).eq("user_id", user_id).execute()
+    background_tasks.add_task(sync_attendance_sheet)
 
 
 @router.get("/user/{user_id}/results", response_model=list[Any])

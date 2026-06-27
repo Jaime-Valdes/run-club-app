@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import * as XLSX from "xlsx";
 import { useParams, useNavigate } from "react-router-dom";
 import { getUsers } from "../api/users";
 import { getRace, getResults, saveResult, deleteResult } from "../api/races";
@@ -61,6 +62,25 @@ export default function RaceDetail() {
     }
   }
 
+  function exportRace() {
+    const attendingMembers = members.filter((m) => results[m.id]);
+    const rows = attendingMembers.map((member) => {
+      const parts = member.name.trim().split(" ");
+      const result = results[member.id];
+      return {
+        "First Name": parts[0],
+        "Last Name": parts.slice(1).join(" "),
+        "Finish Time": result.time_display || "—",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 14 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Results");
+    const safeName = (race.title || "race").replace(/[^a-z0-9]/gi, "-").toLowerCase();
+    XLSX.writeFile(wb, `${safeName}-results.xlsx`);
+  }
+
   const attending = Object.keys(results).length;
 
   const filtered = members
@@ -103,6 +123,9 @@ export default function RaceDetail() {
         <button className={`filter-pill ${!showAll ? "active" : ""}`} onClick={() => setShowAll(false)}>
           Attending ({attending})
         </button>
+        {attending > 0 && (
+          <button className="export-btn" onClick={exportRace}>⬇ Export results</button>
+        )}
       </div>
 
       <input

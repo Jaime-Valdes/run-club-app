@@ -554,6 +554,16 @@
   box-shadow: 0 2px 8px rgba(87, 6, 140, 0.22);
 }
 
+.context-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.context-actions .back-btn {
+  margin-bottom: 0;
+}
+
 .export-btn {
   margin-left: auto;
   padding: 6px 14px;
