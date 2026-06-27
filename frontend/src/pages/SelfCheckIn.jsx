@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getUsers } from "../api/users";
 import { getRun } from "../api/runs";
-import { checkIn, checkOut, getAttendanceForRun } from "../api/attendance";
+import { checkIn, getAttendanceForRun } from "../api/attendance";
 import "./SelfCheckIn.css";
 
 export default function SelfCheckIn() {
@@ -15,18 +15,15 @@ export default function SelfCheckIn() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [runTitle, setRunTitle] = useState("");
-  const [justCheckedIn, setJustCheckedIn] = useState(null);
+  const [checkedInMember, setCheckedInMember] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!runId) return;
-    Promise.all([
-      getUsers(),
-      getAttendanceForRun(runId),
-      getRun(runId),
-    ])
+    Promise.all([getUsers(), getAttendanceForRun(runId), getRun(runId)])
       .then(([users, records, run]) => {
         setMembers(users);
-        setAttendees(records.map((r) => r.user_id));
+        setAttendees(new Set(records.map((r) => r.user_id)));
         setRunTitle(run.title || "Practice");
       })
       .catch((err) => setError(err.message))
@@ -34,15 +31,17 @@ export default function SelfCheckIn() {
   }, [runId]);
 
   async function handleTap(member) {
-    const isCheckedIn = attendees.includes(member.id);
-    if (isCheckedIn) {
-      await checkOut(runId, member.id);
-      setAttendees((prev) => prev.filter((id) => id !== member.id));
-      setJustCheckedIn(null);
-    } else {
-      await checkIn(runId, member.id);
-      setAttendees((prev) => [...prev, member.id]);
-      setJustCheckedIn(member.id);
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      if (!attendees.has(member.id)) {
+        await checkIn(runId, member.id);
+      }
+      setCheckedInMember(member);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -62,26 +61,30 @@ export default function SelfCheckIn() {
   if (loading) return <div className="sci-loading">Loading...</div>;
   if (error) return <div className="sci-error"><div className="sci-error-icon">⚠️</div><p>{error}</p></div>;
 
+  if (checkedInMember) {
+    return (
+      <div className="sci sci-success-screen">
+        <div className="sci-success-icon">✓</div>
+        <h1 className="sci-success-title">You're checked in!</h1>
+        <p className="sci-success-name">{checkedInMember.name}</p>
+        <p className="sci-success-session">{runTitle}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="sci">
       <div className="sci-header">
-        <div className="sci-logo">🏃</div>
         <h1 className="sci-title">NYU Run Club</h1>
         <p className="sci-subtitle">{runTitle}</p>
         <p className="sci-instructions">Find your name and tap to check in</p>
       </div>
 
-      {justCheckedIn && (
-        <div className="sci-success-banner">
-          ✓ {members.find((m) => m.id === justCheckedIn)?.name} — checked in!
-        </div>
-      )}
-
       <input
         className="sci-search"
         placeholder="Search your name..."
         value={search}
-        onChange={(e) => { setSearch(e.target.value); setJustCheckedIn(null); }}
+        onChange={(e) => setSearch(e.target.value)}
         autoFocus
       />
 
@@ -89,20 +92,17 @@ export default function SelfCheckIn() {
         {filtered.length === 0 ? (
           <p className="sci-empty">No members found</p>
         ) : (
-          filtered.map((member) => {
-            const checked = attendees.includes(member.id);
-            return (
-              <button
-                key={member.id}
-                className={`sci-member ${checked ? "checked" : ""}`}
-                onClick={() => handleTap(member)}
-              >
-                <div className="sci-avatar">{member.name[0].toUpperCase()}</div>
-                <div className="sci-name">{member.name}</div>
-                {checked && <span className="sci-check">✓</span>}
-              </button>
-            );
-          })
+          filtered.map((member) => (
+            <button
+              key={member.id}
+              className="sci-member"
+              onClick={() => handleTap(member)}
+              disabled={submitting}
+            >
+              <div className="sci-avatar">{member.name[0].toUpperCase()}</div>
+              <div className="sci-name">{member.name}</div>
+            </button>
+          ))
         )}
       </div>
     </div>
