@@ -44,6 +44,14 @@ def health_check():
     return {"status": "healthy"}
 
 
+@app.get("/sync-sheet")
+def manual_sync():
+    """Manually trigger a Google Sheet sync. Use this to seed the sheet with existing data."""
+    from sheets import sync_attendance_sheet
+    sync_attendance_sheet()
+    return {"status": "synced"}
+
+
 app.include_router(users_router)
 app.include_router(clubs_router)
 app.include_router(runs_router)
