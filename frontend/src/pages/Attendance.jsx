@@ -4,11 +4,18 @@ import { useClub } from "../context/ClubContext";
 import { getUsers } from "../api/users";
 import { getRuns, createRun } from "../api/runs";
 import { checkIn, checkOut, getAttendanceForRun } from "../api/attendance";
+import { createUser } from "../api/users";
 import { createRace } from "../api/races";
 import { QRCodeSVG } from "qrcode.react";
 import "./Attendance.css";
 
 const RACE_DISTANCES = ["5k", "10k", "Half Marathon", "XC", "Track Meet"];
+
+function nowEastern() {
+  const pad = (n) => String(n).padStart(2, "0");
+  const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 const networkHost = import.meta.env.VITE_NETWORK_HOST;
 const checkInOrigin = networkHost
@@ -34,19 +41,24 @@ export default function Attendance() {
 
   const [newRun, setNewRun] = useState({
     title: "",
-    date: new Date().toISOString().slice(0, 16),
+    date: nowEastern(),
     notes: "",
   });
 
   const [newRace, setNewRace] = useState({
     title: "",
-    date: new Date().toISOString().slice(0, 16),
+    date: nowEastern(),
     distance: "5k",
     xcDistance: "",
     location: "",
   });
 
   const [submitted, setSubmitted] = useState(false);
+
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [newMember, setNewMember] = useState({ firstName: "", lastName: "", netId: "" });
+  const [addingMember, setAddingMember] = useState(false);
+  const [addMemberError, setAddMemberError] = useState("");
 
   useEffect(() => {
     if (!club) return;
@@ -116,6 +128,26 @@ export default function Attendance() {
     } else {
       await checkIn(activeRun.id, userId);
       setAttendees((prev) => [...prev, userId]);
+    }
+  }
+
+  async function handleAddMember(e) {
+    e.preventDefault();
+    setAddingMember(true);
+    setAddMemberError("");
+    try {
+      const name = `${newMember.firstName.trim()} ${newMember.lastName.trim()}`;
+      const email = `${newMember.netId.trim().toLowerCase()}@nyu.edu`;
+      const user = await createUser({ name, email });
+      await checkIn(activeRun.id, user.id);
+      setMembers((prev) => [...prev, user]);
+      setAttendees((prev) => [...prev, user.id]);
+      setNewMember({ firstName: "", lastName: "", netId: "" });
+      setShowAddMember(false);
+    } catch (err) {
+      setAddMemberError(err.message || "Failed to add member.");
+    } finally {
+      setAddingMember(false);
     }
   }
 
@@ -315,12 +347,55 @@ export default function Attendance() {
             <div className="qr-url">{checkInOrigin}/selfcheckin</div>
           </div>
 
-          <input
-            className="search-input"
-            placeholder="Search members..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="search-add-row">
+            <input
+              className="search-input"
+              placeholder="Search members..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button className="add-member-btn" onClick={() => { setShowAddMember((v) => !v); setAddMemberError(""); }}>
+              {showAddMember ? "✕ Cancel" : "+ New Member"}
+            </button>
+          </div>
+
+          {showAddMember && (
+            <form className="add-member-form card" onSubmit={handleAddMember}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>First Name</label>
+                  <input
+                    required
+                    placeholder="Jane"
+                    value={newMember.firstName}
+                    onChange={(e) => setNewMember({ ...newMember, firstName: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Last Name</label>
+                  <input
+                    required
+                    placeholder="Smith"
+                    value={newMember.lastName}
+                    onChange={(e) => setNewMember({ ...newMember, lastName: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Net ID</label>
+                <input
+                  required
+                  placeholder="js1234"
+                  value={newMember.netId}
+                  onChange={(e) => setNewMember({ ...newMember, netId: e.target.value })}
+                />
+              </div>
+              {addMemberError && <p className="form-error">{addMemberError}</p>}
+              <button className="btn-primary" type="submit" disabled={addingMember}>
+                {addingMember ? "Adding..." : "Add & Check In →"}
+              </button>
+            </form>
+          )}
 
           <div className="member-list card">
             {filteredMembers.length === 0 ? (
@@ -332,7 +407,7 @@ export default function Attendance() {
                     <div className="member-avatar">{member.name[0].toUpperCase()}</div>
                     <div className="member-info">
                       <div className="member-name">{member.name}</div>
-                      <div className="member-email">{member.email}</div>
+                      <div className="member-email">{member.email?.split("@")[0]}</div>
                     </div>
                     <button className="checkin-btn checked" onClick={() => toggleAttendance(member.id)}>
                       ✓ Here
@@ -347,7 +422,7 @@ export default function Attendance() {
                     <div className="member-avatar">{member.name[0].toUpperCase()}</div>
                     <div className="member-info">
                       <div className="member-name">{member.name}</div>
-                      <div className="member-email">{member.email}</div>
+                      <div className="member-email">{member.email?.split("@")[0]}</div>
                     </div>
                     <button className="checkin-btn" onClick={() => toggleAttendance(member.id)}>
                       Check In
