@@ -47,6 +47,22 @@
   box-shadow: 0 4px 14px rgba(42, 157, 92, 0.28);
 }
 
+.sci-search-wrapper {
+  margin-bottom: 12px;
+}
+
+.sci-search-hint {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.sci-search-wrapper .sci-search {
+  margin-bottom: 0;
+}
+
 .sci-search {
   width: 100%;
   padding: 14px 16px;

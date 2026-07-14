@@ -5,8 +5,10 @@ A web app for managing attendance and race records for the NYU Run Club.
 ## Features
 
 **Attendance**
-- Start a practice session and check members in from a list
-- Display a QR code so members can check themselves in on their own phone
+- Start a practice or race session and check members in from a list
+- Display a QR code so members can scan and check themselves in on their own phone (one check-in per device — refreshing the page does not allow checking in other members)
+- Add new members on the spot (first name, last name, Net ID) — they're created in the database and checked in immediately
+- Checked-in members float to the top of the list alphabetically, with a divider separating them from members not yet checked in
 - Attendance Records dashboard — leaderboard by member, per-practice breakdowns, attendance stats filterable by date range
 
 **Race Records**
@@ -16,15 +18,23 @@ A web app for managing attendance and race records for the NYU Run Club.
 - Club Records table — men's and women's all-time bests for every distance and track event
 - Pending time badges to flag members with missing results
 
+**Spreadsheet Exports**
+- Export full attendance leaderboard (First Name, Last Name, Practices Attended, Races Attended, Total Attendances) as an `.xlsx` file from the Attendance Records page
+- Export individual practice attendee lists directly from the practice drill-down view
+- Export individual race results from any race detail page
+- **Google Sheets auto-sync** — a shared Google Sheet updates automatically in the background after every check-in and race result change (no manual action needed). Trigger a full backfill at any time by visiting `/sync-sheet` on the backend.
+
 **Other**
 - Gender-aware XC distances (men run 8k, women run 6k) — stored once, displayed correctly per athlete
-- Mobile-friendly self check-in page optimized for iPhone
+- Fully responsive — works on desktop and mobile (iPhone)
+- Self check-in confirmation screen with animated success state
 
 ## Tech Stack
 
 - **Frontend:** React + Vite
 - **Backend:** FastAPI (Python)
 - **Database:** Supabase (PostgreSQL)
+- **Deployment:** Vercel (frontend) + Railway (backend)
 
 ---
 
@@ -84,9 +94,32 @@ The app will be available at `http://localhost:5173`.
 
 ---
 
+## Deployment
+
+The app is deployed on **Vercel** (frontend) and **Railway** (backend).
+
+### Required environment variables
+
+**Railway (backend):**
+| Variable | Description |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL |
+| `SUPABASE_KEY` | Your Supabase anon/service key |
+| `GOOGLE_CREDENTIALS_JSON` | Full JSON content of your Google service account key file |
+| `GOOGLE_SHEET_ID` | ID of the Google Sheet to sync attendance data to |
+
+**Vercel (frontend):**
+| Variable | Description |
+|---|---|
+| `VITE_API_URL` | Your Railway backend URL (e.g. `https://your-app.up.railway.app`) |
+
+---
+
 ## QR Code / Mobile Self Check-In
 
-The attendance page shows a QR code members can scan to check themselves in. To make this work on phones on the same Wi-Fi network:
+In production (deployed to Vercel + Railway), the QR code works on any device over cellular or Wi-Fi — no configuration needed.
+
+For local development with mobile testing on the same Wi-Fi network:
 
 1. Find your Mac's local IP address:
    ```bash
@@ -99,9 +132,41 @@ The attendance page shows a QR code members can scan to check themselves in. To 
    VITE_API_URL=http://<your-mac-ip>:8000
    ```
 
-3. Restart the frontend (`npm run dev`). Vite will print a **Network** URL — that's what the QR code will encode. Make sure your phone and Mac are on the same Wi-Fi network.
+3. Restart the frontend (`npm run dev`). Vite will print a **Network** URL — that's what the QR code will encode.
 
 > If your IP changes (new network), update `.env.local` and restart Vite.
+
+---
+
+## Google Sheets Auto-Sync
+
+The app can automatically keep a Google Sheet up to date with full attendance data after every check-in.
+
+### Setup
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) and create a new project
+2. Enable the **Google Sheets API** (APIs & Services → Library)
+3. Create a **Service Account** (APIs & Services → Credentials → Create Credentials → Service Account)
+4. Under the service account's **Keys** tab, create a new JSON key and download it
+5. Create a Google Sheet and share it with the service account's `client_email` (Editor access)
+6. Add `GOOGLE_CREDENTIALS_JSON` (full JSON file contents) and `GOOGLE_SHEET_ID` (from the sheet URL) as Railway environment variables
+
+### Manual backfill
+
+To populate the sheet with all existing data (e.g. after initial setup), visit:
+
+```
+https://your-railway-url.up.railway.app/sync-sheet
+```
+
+This returns `{"status": "synced", "members": N, "rows_written": N}` on success.
+
+### Sheet format
+
+| First Name | Last Name | Email | Practices Attended | Races Attended | Total Attendances |
+|---|---|---|---|---|---|
+
+Sorted by Total Attendances descending. Updates automatically after every check-in, check-out, and race result change.
 
 ---
 

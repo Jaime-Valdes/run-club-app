@@ -2,50 +2,69 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getUsers } from "../api/users";
 import { getRun } from "../api/runs";
+import { getRace, getResults, saveResult } from "../api/races";
 import { checkIn, getAttendanceForRun } from "../api/attendance";
 import "./SelfCheckIn.css";
 
 export default function SelfCheckIn() {
   const [searchParams] = useSearchParams();
   const runId = searchParams.get("run_id");
+  const raceId = searchParams.get("race_id");
+  const mode = raceId ? "race" : "practice";
 
   const [members, setMembers] = useState([]);
-  const [attendees, setAttendees] = useState([]);
+  const [checkedInIds, setCheckedInIds] = useState(new Set());
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [runTitle, setRunTitle] = useState("");
+  const [sessionTitle, setSessionTitle] = useState("");
   const [checkedInMember, setCheckedInMember] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!runId) return;
+  const storageKey = mode === "race" ? `sci_race_${raceId}` : `sci_${runId}`;
 
-    const stored = localStorage.getItem(`sci_${runId}`);
+  useEffect(() => {
+    const stored = localStorage.getItem(storageKey);
     if (stored) {
       setCheckedInMember(JSON.parse(stored));
       setLoading(false);
       return;
     }
 
-    Promise.all([getUsers(), getAttendanceForRun(runId), getRun(runId)])
-      .then(([users, records, run]) => {
-        setMembers(users);
-        setAttendees(new Set(records.map((r) => r.user_id)));
-        setRunTitle(run.title || "Practice");
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [runId]);
+    if (mode === "race") {
+      Promise.all([getUsers(), getRace(raceId), getResults(raceId)])
+        .then(([users, race, resultsList]) => {
+          setMembers(users);
+          setSessionTitle(race.title || "Race");
+          setCheckedInIds(new Set(resultsList.map((r) => r.user_id)));
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    } else {
+      if (!runId) { setLoading(false); return; }
+      Promise.all([getUsers(), getAttendanceForRun(runId), getRun(runId)])
+        .then(([users, records, run]) => {
+          setMembers(users);
+          setSessionTitle(run.title || "Practice");
+          setCheckedInIds(new Set(records.map((r) => r.user_id)));
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    }
+  }, [runId, raceId]);
 
   async function handleTap(member) {
     if (submitting) return;
     setSubmitting(true);
     try {
-      if (!attendees.has(member.id)) {
-        await checkIn(runId, member.id);
+      if (!checkedInIds.has(member.id)) {
+        if (mode === "race") {
+          await saveResult(raceId, { race_id: raceId, user_id: member.id, time_display: null });
+        } else {
+          await checkIn(runId, member.id);
+        }
       }
-      localStorage.setItem(`sci_${runId}`, JSON.stringify(member));
+      localStorage.setItem(storageKey, JSON.stringify(member));
       setCheckedInMember(member);
     } catch (err) {
       setError(err.message);
@@ -58,7 +77,7 @@ export default function SelfCheckIn() {
     m.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (!runId) {
+  if (!runId && !raceId) {
     return (
       <div className="sci-error">
         <div className="sci-error-icon">🔗</div>
@@ -76,7 +95,7 @@ export default function SelfCheckIn() {
         <div className="sci-success-icon">✓</div>
         <h1 className="sci-success-title">You're checked in!</h1>
         <p className="sci-success-name">{checkedInMember.name}</p>
-        <p className="sci-success-session">{runTitle}</p>
+        <p className="sci-success-session">{sessionTitle}</p>
       </div>
     );
   }
@@ -85,17 +104,21 @@ export default function SelfCheckIn() {
     <div className="sci">
       <div className="sci-header">
         <h1 className="sci-title">NYU Run Club</h1>
-        <p className="sci-subtitle">{runTitle}</p>
-        <p className="sci-instructions">Find your name and tap to check in</p>
+        <p className="sci-subtitle">{sessionTitle}</p>
+        <p className="sci-instructions">
+          {mode === "race" ? "Find your name to check in for this race" : "Find your name and tap to check in"}
+        </p>
       </div>
 
-      <input
-        className="sci-search"
-        placeholder="Search your name..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        autoFocus
-      />
+      <div className="sci-search-wrapper">
+        <p className="sci-search-hint">👇 Tap below to search</p>
+        <input
+          className="sci-search"
+          placeholder="Start typing your name..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       <div className="sci-list">
         {filtered.length === 0 ? (

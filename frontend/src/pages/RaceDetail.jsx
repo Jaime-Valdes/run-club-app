@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { useParams, useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { getUsers } from "../api/users";
 import { getRace, getResults, saveResult, deleteResult } from "../api/races";
 import "./RaceDetail.css";
 
 const TYPE_LABELS = { road_xc: "Road / XC", track: "Track" };
+
+const networkHost = import.meta.env.VITE_NETWORK_HOST;
+const checkInOrigin = networkHost
+  ? `${window.location.protocol}//${networkHost}${window.location.port ? `:${window.location.port}` : ""}`
+  : window.location.origin;
 
 export default function RaceDetail() {
   const { raceId } = useParams();
@@ -114,6 +120,17 @@ export default function RaceDetail() {
             {Object.values(results).filter((r) => r.time_display).length} times entered
           </span>
         </div>
+      </div>
+
+      <div className="qr-card card">
+        <div className="qr-label">Members can scan to check themselves in</div>
+        <QRCodeSVG
+          value={`${checkInOrigin}/selfcheckin?race_id=${raceId}`}
+          size={160}
+          fgColor="#57068c"
+          level="M"
+        />
+        <div className="qr-url">{checkInOrigin}/selfcheckin</div>
       </div>
 
       <div className="race-filter-row">
