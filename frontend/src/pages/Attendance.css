@@ -204,6 +204,73 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+.checkin-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.checkin-live-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #1e7a45;
+  background: rgba(42, 157, 92, 0.12);
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  animation: checkinLivePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes checkinLivePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.summary-submit-btn {
+  flex: 2;
+  align-self: stretch;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 0 16px;
+  margin-left: 16px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.summary-submit-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+.summary-submit-btn:active {
+  transform: translateY(0);
+}
+
+.summary-submit-btn.submitted {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  cursor: default;
+  opacity: 0.75;
+}
+.summary-submit-btn.submitted:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: none;
+}
+
+.summary-submit-label {
+  font-size: 19px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.summary-submit-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 2px;
+}
+
 .search-add-row {
   display: flex;
   align-items: center;

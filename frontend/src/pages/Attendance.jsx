@@ -310,7 +310,10 @@ export default function Attendance() {
         <>
           <div className="checkin-header">
             <button className="back-btn" onClick={() => setStep("select")}>← Back</button>
-            <h1 className="page-title">{activeRun.title}</h1>
+            <div className="checkin-title-row">
+              <h1 className="page-title">{activeRun.title}</h1>
+              {activeRun.is_live && <span className="checkin-live-badge">● LIVE</span>}
+            </div>
             <p className="run-meta">
               {new Date(activeRun.date).toLocaleDateString("en-US", {
                 weekday: "long", month: "long", day: "numeric",
@@ -325,19 +328,23 @@ export default function Attendance() {
               <div className="summary-label">Checked In</div>
             </div>
             <div className="summary-divider" />
-            <div className="summary-stat">
-              <div className="summary-value">{members.length - attendees.length}</div>
-              <div className="summary-label">Not Here</div>
-            </div>
-            <div className="summary-divider" />
-            <div className="summary-stat">
-              <div className="summary-value">{members.length}</div>
-              <div className="summary-label">Total Members</div>
-            </div>
+            <button
+              className={`summary-submit-btn${!activeRun.is_live ? " submitted" : ""}`}
+              disabled={!activeRun.is_live}
+              onClick={async () => {
+                await updateRun(activeRun.id, { is_live: false });
+                setSubmitted(true);
+                setTimeout(() => navigate("/"), 1500);
+              }}
+            >
+              <div className="summary-submit-label">
+                {activeRun.is_live ? "Submit Attendance" : "✓ Attendance Submitted"}
+              </div>
+            </button>
           </div>
 
           <div className="qr-card card">
-            <div className="qr-label">Members can scan to check themselves in</div>
+            <div className="qr-label">Please scan to check in!</div>
             <QRCodeSVG
               value={`${checkInOrigin}/selfcheckin?run_id=${activeRun.id}`}
               size={160}
@@ -432,16 +439,6 @@ export default function Attendance() {
             )}
           </div>
 
-          <button
-            className="submit-session-btn"
-            onClick={async () => {
-              await updateRun(activeRun.id, { is_live: false });
-              setSubmitted(true);
-              setTimeout(() => navigate("/"), 1500);
-            }}
-          >
-            Submit Session ({attendees.length} checked in)
-          </button>
         </>
       )}
     </div>
