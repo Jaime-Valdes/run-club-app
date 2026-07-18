@@ -16,13 +16,14 @@ export default function Home() {
     if (!club) return;
     Promise.all([getRuns(club.id), getRaces(club.id)])
       .then(([runs, races]) => {
+        console.log("[Home] runs from API:", runs.map(r => ({ id: r.id, title: r.title, is_live: r.is_live })));
         const merged = [
           ...runs.map((r) => ({ ...r, type: "practice" })),
           ...races.map((r) => ({ ...r, type: "race" })),
         ].sort((a, b) => new Date(b.date) - new Date(a.date));
         setSessions(merged);
       })
-      .catch(() => {})
+      .catch((err) => console.error("[Home] fetch error:", err))
       .finally(() => setLoading(false));
   }, [club]);
 
@@ -52,6 +53,10 @@ export default function Home() {
       <button className="start-btn" onClick={() => navigate("/attendance")}>
         Start Attendance Session
       </button>
+
+      <div style={{fontSize:11,color:"#888",marginBottom:8}}>
+        debug: loading={String(loading)} sessions={sessions.length} live={liveSessions.length}
+      </div>
 
       {!loading && liveSessions.length > 0 && (
         <div className="live-section">
