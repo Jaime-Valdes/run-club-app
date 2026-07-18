@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from database import supabase
-from schemas import RunCreate, RunResponse
+from schemas import RunCreate, RunUpdate, RunResponse
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -31,6 +31,17 @@ def list_runs(club_id: str):
 @router.get("/{run_id}", response_model=RunResponse)
 def get_run(run_id: str):
     result = supabase.table("runs").select("*").eq("id", run_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return result.data[0]
+
+
+@router.patch("/{run_id}", response_model=RunResponse)
+def update_run(run_id: str, data: RunUpdate):
+    updates = data.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    result = supabase.table("runs").update(updates).eq("id", run_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Run not found")
     return result.data[0]

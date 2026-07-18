@@ -75,11 +75,19 @@ class RunBase(BaseModel):
     title: str
     date: datetime
     notes: Optional[str] = None
+    is_live: Optional[bool] = False
 
 
 class RunCreate(RunBase):
     """Schema for creating a run."""
     club_id: str
+
+
+class RunUpdate(BaseModel):
+    """Schema for partial run update."""
+    is_live: Optional[bool] = None
+    title: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class RunResponse(RunBase):
