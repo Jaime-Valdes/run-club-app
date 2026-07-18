@@ -344,7 +344,6 @@ export default function Attendance() {
               fgColor="#57068c"
               level="M"
             />
-            <div className="qr-url">{checkInOrigin}/selfcheckin</div>
           </div>
 
           <div className="search-add-row">

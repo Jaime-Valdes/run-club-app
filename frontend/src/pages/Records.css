@@ -370,6 +370,26 @@
   padding: 4px 9px; border-radius: 7px;
 }
 
+.inline-time-cancel {
+  color: var(--muted); font-size: 13px; padding: 2px 5px;
+  opacity: 0.6;
+}
+.inline-time-cancel:hover { opacity: 1; color: var(--danger); }
+
+.inline-time-saved {
+  display: flex; align-items: center; gap: 6px;
+}
+
+.time-edit-sm {
+  font-size: 11px; font-weight: 600;
+  color: var(--muted);
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.time-edit-sm:hover { color: var(--primary); border-color: var(--primary); }
+
 .pr-row {
   display: flex;
   align-items: center;

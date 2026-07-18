@@ -2,19 +2,26 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClub } from "../context/ClubContext";
 import { getRuns } from "../api/runs";
+import { getRaces } from "../api/races";
 import logo from "../assets/logo.svg";
 import "./Home.css";
 
 export default function Home() {
   const { club, loading: clubLoading } = useClub();
   const navigate = useNavigate();
-  const [runs, setRuns] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!club) return;
-    getRuns(club.id)
-      .then(setRuns)
+    Promise.all([getRuns(club.id), getRaces(club.id)])
+      .then(([runs, races]) => {
+        const merged = [
+          ...runs.map((r) => ({ ...r, type: "practice" })),
+          ...races.map((r) => ({ ...r, type: "race" })),
+        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+        setSessions(merged);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [club]);
@@ -47,23 +54,33 @@ export default function Home() {
         <h2 className="section-title">Past Sessions</h2>
         {loading ? (
           <p className="muted">Loading...</p>
-        ) : runs.length === 0 ? (
+        ) : sessions.length === 0 ? (
           <p className="muted">No sessions yet. Start your first one!</p>
         ) : (
           <div className="session-list">
-            {runs.map((run) => (
+            {sessions.map((item) => (
               <div
-                key={run.id}
+                key={`${item.type}-${item.id}`}
                 className="session-item"
-                onClick={() => navigate(`/attendance?run_id=${run.id}`)}
+                onClick={() =>
+                  item.type === "race"
+                    ? navigate(`/race/${item.id}`)
+                    : navigate(`/attendance?run_id=${item.id}`)
+                }
               >
                 <div className="session-info">
-                  <div className="session-title">{run.title}</div>
+                  <div className="session-title-row">
+                    <span className={`session-type-badge ${item.type}`}>
+                      {item.type === "race" ? "Race" : "Practice"}
+                    </span>
+                    <span className="session-title">{item.title}</span>
+                  </div>
                   <div className="session-meta">
-                    {new Date(run.date).toLocaleDateString("en-US", {
+                    {new Date(item.date).toLocaleDateString("en-US", {
                       weekday: "short", month: "short", day: "numeric", year: "numeric",
                     })}
-                    {run.notes && ` · ${run.notes}`}
+                    {item.type === "practice" && item.notes && ` · ${item.notes}`}
+                    {item.type === "race" && item.distance && ` · ${item.distance}`}
                   </div>
                 </div>
                 <span className="session-chevron">›</span>

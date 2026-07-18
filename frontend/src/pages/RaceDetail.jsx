@@ -8,6 +8,13 @@ import "./RaceDetail.css";
 
 const TYPE_LABELS = { road_xc: "Road / XC", track: "Track" };
 
+function formatTimeInput(raw) {
+  const digits = raw.replace(/\D/g, "").slice(0, 6);
+  if (digits.length < 4) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, digits.length - 2)}:${digits.slice(-2)}`;
+  return `${digits.slice(0, digits.length - 4)}:${digits.slice(-4, -2)}:${digits.slice(-2)}`;
+}
+
 const networkHost = import.meta.env.VITE_NETWORK_HOST;
 const checkInOrigin = networkHost
   ? `${window.location.protocol}//${networkHost}${window.location.port ? `:${window.location.port}` : ""}`
@@ -130,7 +137,6 @@ export default function RaceDetail() {
           fgColor="#57068c"
           level="M"
         />
-        <div className="qr-url">{checkInOrigin}/selfcheckin</div>
       </div>
 
       <div className="race-filter-row">
@@ -186,10 +192,10 @@ export default function RaceDetail() {
                         <div className="time-entry">
                           <input
                             className="time-input"
-                            placeholder="e.g. 18:42"
+                            placeholder="16:54"
                             autoFocus
                             value={timeInputs[member.id]}
-                            onChange={(e) => setTimeInputs((p) => ({ ...p, [member.id]: e.target.value }))}
+                            onChange={(e) => setTimeInputs((p) => ({ ...p, [member.id]: formatTimeInput(e.target.value) }))}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") handleSaveTime(member.id);
                               if (e.key === "Escape") setTimeInputs((p) => { const n = { ...p }; delete n[member.id]; return n; });

@@ -78,10 +78,37 @@
 .session-item:last-child { border-bottom: none; }
 .session-item:hover { background: var(--bg); }
 
+.session-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .session-title {
   font-weight: 600;
   font-size: 15px;
   color: var(--text);
+}
+
+.session-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.session-type-badge.practice {
+  background: var(--primary-glow);
+  color: var(--primary);
+}
+
+.session-type-badge.race {
+  background: rgba(42, 157, 92, 0.12);
+  color: #1e7a45;
 }
 
 .session-meta {
