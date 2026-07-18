@@ -13,6 +13,13 @@ import {
 } from "../api/races";
 import "./Records.css";
 
+function formatTimeInput(raw) {
+  const digits = raw.replace(/\D/g, "").slice(0, 6);
+  if (digits.length < 4) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, digits.length - 2)}:${digits.slice(-2)}`;
+  return `${digits.slice(0, digits.length - 4)}:${digits.slice(-4, -2)}:${digits.slice(-2)}`;
+}
+
 function parseSeconds(t) {
   if (!t) return Infinity;
   const p = t.split(":").map(Number);
@@ -575,16 +582,14 @@ export default function RaceRecords() {
                       )}
                     </div>
                     {!isTrack && (
-                      result.time_display ? (
-                        <div className="time-result-badge">{result.time_display}</div>
-                      ) : result.id in pendingTimes ? (
+                      result.id in pendingTimes ? (
                         <div className="inline-time-entry">
                           <input
                             className="inline-time-input"
-                            placeholder="18:42"
+                            placeholder="16:54"
                             autoFocus
                             value={pendingTimes[result.id]}
-                            onChange={(e) => setPendingTimes((p) => ({ ...p, [result.id]: e.target.value }))}
+                            onChange={(e) => setPendingTimes((p) => ({ ...p, [result.id]: formatTimeInput(e.target.value) }))}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") handleSaveTime(result);
                               if (e.key === "Escape") setPendingTimes((p) => { const n = { ...p }; delete n[result.id]; return n; });
@@ -593,6 +598,12 @@ export default function RaceRecords() {
                           <button className="inline-time-save" onClick={() => handleSaveTime(result)} disabled={savingTime[result.id]}>
                             {savingTime[result.id] ? "…" : "Save"}
                           </button>
+                          <button className="inline-time-cancel" onClick={() => setPendingTimes((p) => { const n = { ...p }; delete n[result.id]; return n; })}>✕</button>
+                        </div>
+                      ) : result.time_display ? (
+                        <div className="inline-time-saved">
+                          <span className="time-result-badge">{result.time_display}</span>
+                          <button className="time-edit-sm" onClick={() => setPendingTimes((p) => ({ ...p, [result.id]: result.time_display }))}>Edit</button>
                         </div>
                       ) : (
                         <button className="pending-badge" onClick={() => setPendingTimes((p) => ({ ...p, [result.id]: "" }))}>

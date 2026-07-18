@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useClub } from "../context/ClubContext";
 import { getUsers } from "../api/users";
-import { getRuns, createRun } from "../api/runs";
+import { getRuns, createRun, updateRun } from "../api/runs";
 import { checkIn, checkOut, getAttendanceForRun } from "../api/attendance";
 import { createUser } from "../api/users";
 import { createRace } from "../api/races";
@@ -86,7 +86,7 @@ export default function Attendance() {
     setSubmitting(true);
     setCreateError("");
     try {
-      const run = await createRun({ ...newRun, club_id: club.id });
+      const run = await createRun({ ...newRun, club_id: club.id, is_live: true });
       setActiveRun(run);
       setRuns((prev) => [run, ...prev]);
       setStep("checkin");
@@ -434,7 +434,8 @@ export default function Attendance() {
 
           <button
             className="submit-session-btn"
-            onClick={() => {
+            onClick={async () => {
+              await updateRun(activeRun.id, { is_live: false });
               setSubmitted(true);
               setTimeout(() => navigate("/"), 1500);
             }}

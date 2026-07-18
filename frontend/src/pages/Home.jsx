@@ -26,6 +26,9 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, [club]);
 
+  const liveSessions = sessions.filter((s) => s.type === "practice" && s.is_live);
+  const pastSessions = sessions.filter((s) => !(s.type === "practice" && s.is_live));
+
   if (clubLoading) return <div className="page-loading">Loading...</div>;
 
   if (!club) {
@@ -50,15 +53,42 @@ export default function Home() {
         Start Attendance Session
       </button>
 
+      {!loading && liveSessions.length > 0 && (
+        <div className="live-section">
+          <h2 className="section-title live-section-title">
+            <span className="live-dot" /> Live Now
+          </h2>
+          {liveSessions.map((item) => (
+            <div
+              key={item.id}
+              className="live-card"
+              onClick={() => navigate(`/attendance?run_id=${item.id}`)}
+            >
+              <div className="live-card-left">
+                <div className="live-badge">● LIVE</div>
+                <div className="live-card-title">{item.title}</div>
+                <div className="live-card-meta">
+                  {new Date(item.date).toLocaleDateString("en-US", {
+                    weekday: "long", month: "short", day: "numeric",
+                  })}
+                  {item.notes && ` · ${item.notes}`}
+                </div>
+              </div>
+              <div className="live-card-cta">Join →</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="sessions-section">
         <h2 className="section-title">Past Sessions</h2>
         {loading ? (
           <p className="muted">Loading...</p>
-        ) : sessions.length === 0 ? (
+        ) : pastSessions.length === 0 && liveSessions.length === 0 ? (
           <p className="muted">No sessions yet. Start your first one!</p>
-        ) : (
+        ) : pastSessions.length === 0 ? null : (
           <div className="session-list">
-            {sessions.map((item) => (
+            {pastSessions.map((item) => (
               <div
                 key={`${item.type}-${item.id}`}
                 className="session-item"
