@@ -26,8 +26,8 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, [club]);
 
-  const liveSessions = sessions.filter((s) => s.type === "practice" && s.is_live);
-  const pastSessions = sessions.filter((s) => !(s.type === "practice" && s.is_live));
+  const liveSessions = sessions.filter((s) => s.is_live);
+  const pastSessions = sessions.filter((s) => !s.is_live);
 
   if (clubLoading) return <div className="page-loading">Loading...</div>;
 
@@ -46,7 +46,6 @@ export default function Home() {
       <div className="home-header">
         <img src={logo} alt="NYU Runners" className="home-logo" />
         <h1 className="home-title">NYU Run Club</h1>
-        <p className="home-subtitle">New York University · Running Community</p>
       </div>
 
       <button className="start-btn" onClick={() => navigate("/attendance")}>
@@ -62,16 +61,17 @@ export default function Home() {
             <div
               key={item.id}
               className="live-card"
-              onClick={() => navigate(`/attendance?run_id=${item.id}`)}
+              onClick={() => navigate(item.type === "race" ? `/race/${item.id}` : `/attendance?run_id=${item.id}`)}
             >
               <div className="live-card-left">
-                <div className="live-badge">● LIVE</div>
+                <div className="live-badge">● LIVE {item.type === "race" ? "· Race" : "· Practice"}</div>
                 <div className="live-card-title">{item.title}</div>
                 <div className="live-card-meta">
                   {new Date(item.date).toLocaleDateString("en-US", {
                     weekday: "long", month: "short", day: "numeric",
                   })}
-                  {item.notes && ` · ${item.notes}`}
+                  {item.type === "practice" && item.notes && ` · ${item.notes}`}
+                  {item.type === "race" && item.distance && ` · ${item.distance}`}
                 </div>
               </div>
               <div className="live-card-cta">Join →</div>

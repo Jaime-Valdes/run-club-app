@@ -5,14 +5,14 @@
 }
 
 .home-logo {
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
   object-fit: contain;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .home-title {
-  font-size: 30px;
+  font-size: 34px;
   font-weight: 800;
   color: var(--primary-dark);
   letter-spacing: -0.5px;
@@ -174,8 +174,8 @@
 }
 
 .session-type-badge.race {
-  background: rgba(42, 157, 92, 0.12);
-  color: #1e7a45;
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
 }
 
 .session-meta {
@@ -200,7 +200,7 @@
 
 @media (max-width: 600px) {
   .home-header { padding: 20px 0 8px; }
-  .home-logo { width: 72px; height: 72px; }
-  .home-title { font-size: 24px; }
+  .home-logo { width: 88px; height: 88px; }
+  .home-title { font-size: 28px; }
   .start-btn { font-size: 16px; padding: 15px; }
 }

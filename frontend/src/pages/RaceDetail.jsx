@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { getUsers } from "../api/users";
-import { getRace, getResults, saveResult, deleteResult } from "../api/races";
+import { getRace, getResults, saveResult, deleteResult, updateRace } from "../api/races";
 import "./RaceDetail.css";
 
 const TYPE_LABELS = { road_xc: "Road / XC", track: "Track" };
@@ -111,26 +111,43 @@ export default function RaceDetail() {
 
       <button className="back-btn" onClick={() => navigate("/attendance")}>← Back</button>
 
-      <div className="race-header card">
+      <div className="race-header">
         <div className="race-type-badge">{TYPE_LABELS[race.race_type] || race.race_type}</div>
-        <h1 className="race-title">{race.title}</h1>
+        <div className="race-title-row">
+          <h1 className="race-title">{race.title}</h1>
+          {race.is_live && <span className="race-live-badge">● LIVE</span>}
+        </div>
         <div className="race-meta-row">
           <span>{new Date(race.date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</span>
           <span className="race-dot">·</span>
           <span>{race.distance}</span>
           {race.location && <><span className="race-dot">·</span><span>{race.location}</span></>}
         </div>
-        <div className="race-summary-row">
-          <span className="race-attending-count">{attending} attending</span>
-          <span className="race-dot">·</span>
-          <span className="race-times-count">
-            {Object.values(results).filter((r) => r.time_display).length} times entered
-          </span>
+      </div>
+
+      <div className="race-summary-bar">
+        <div className="race-summary-stat">
+          <div className="race-summary-value">{attending}</div>
+          <div className="race-summary-label">Attending</div>
         </div>
+        <div className="race-summary-divider" />
+        <button
+          className={`summary-submit-btn${!race.is_live ? " submitted" : ""}`}
+          disabled={!race.is_live}
+          onClick={async () => {
+            await updateRace(raceId, { is_live: false });
+            setSubmitted(true);
+            setTimeout(() => navigate("/"), 1500);
+          }}
+        >
+          <div className="summary-submit-label">
+            {race.is_live ? "Submit Attendance" : "✓ Attendance Submitted"}
+          </div>
+        </button>
       </div>
 
       <div className="qr-card card">
-        <div className="qr-label">Members can scan to check themselves in</div>
+        <div className="qr-label">Please scan to check in!</div>
         <QRCodeSVG
           value={`${checkInOrigin}/selfcheckin?race_id=${raceId}`}
           size={160}
@@ -227,15 +244,6 @@ export default function RaceDetail() {
         )}
       </div>
 
-      <button
-        className="submit-session-btn"
-        onClick={() => {
-          setSubmitted(true);
-          setTimeout(() => navigate("/"), 1500);
-        }}
-      >
-        Submit Race ({attending} attending · {Object.values(results).filter((r) => r.time_display).length} times entered)
-      </button>
     </div>
   );
 }

@@ -11,5 +11,6 @@ export const getTrackResults = (raceId) => api.get(`/races/${raceId}/track-resul
 export const getUserTrackResults = (userId) => api.get(`/races/user/${userId}/track-results`);
 export const saveTrackResult = (raceId, data) => api.post(`/races/${raceId}/track-results`, data);
 export const deleteTrackResult = (raceId, userId, event) => api.delete(`/races/${raceId}/track-results/${userId}/${encodeURIComponent(event)}`);
+export const updateRace = (raceId, data) => api.patch(`/races/${raceId}`, data);
 export const getAllResultsForClub = (clubId) => api.get(`/races/all-results?club_id=${clubId}`);
 export const getAllTrackResultsForClub = (clubId) => api.get(`/races/all-track-results?club_id=${clubId}`);

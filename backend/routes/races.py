@@ -1,7 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from typing import Any
 from database import supabase
-from schemas import RaceCreate, RaceResponse, RaceResultCreate, RaceResultResponse, TrackResultCreate, TrackResultResponse
+from schemas import RaceCreate, RaceUpdate, RaceResponse, RaceResultCreate, RaceResultResponse, TrackResultCreate, TrackResultResponse
 from sheets import sync_attendance_sheet
 
 router = APIRouter(prefix="/races", tags=["races"])
@@ -50,6 +50,17 @@ def get_all_track_results(club_id: str):
         return []
     result = supabase.table("track_results").select("user_id, race_id, event, result_display").in_("race_id", race_ids).execute()
     return result.data
+
+
+@router.patch("/{race_id}", response_model=RaceResponse)
+def update_race(race_id: str, data: RaceUpdate):
+    updates = data.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    result = supabase.table("races").update(updates).eq("id", race_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Race not found")
+    return result.data[0]
 
 
 @router.get("/{race_id}", response_model=RaceResponse)

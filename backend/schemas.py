@@ -134,10 +134,15 @@ class RaceBase(BaseModel):
     distance: str
     location: Optional[str] = None
     notes: Optional[str] = None
+    is_live: Optional[bool] = False
 
 
 class RaceCreate(RaceBase):
     club_id: str
+
+
+class RaceUpdate(BaseModel):
+    is_live: Optional[bool] = None
 
 
 class RaceResponse(RaceBase):

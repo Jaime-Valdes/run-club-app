@@ -111,6 +111,7 @@ export default function Attendance() {
         distance,
         race_type,
         club_id: club.id,
+        is_live: true,
       });
       navigate(`/race/${race.id}`);
     } catch (err) {

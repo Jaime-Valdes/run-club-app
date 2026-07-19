@@ -28,13 +28,97 @@
 
 .race-dot { color: var(--border); }
 
-.race-summary-row {
+.race-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.race-live-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #1e7a45;
+  background: rgba(42, 157, 92, 0.12);
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  animation: raceLivePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes raceLivePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.race-summary-bar {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  margin-bottom: 14px;
+  background: var(--grad-primary);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(87, 6, 140, 0.25);
+}
+
+.race-summary-stat {
+  text-align: center;
+  padding: 0 12px;
+}
+
+.race-summary-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.race-summary-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 2px;
+}
+
+.race-summary-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.race-summary-bar .summary-submit-btn {
+  flex: 1;
+  align-self: stretch;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 0 16px;
+  margin-left: 16px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+.race-summary-bar .summary-submit-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+.race-summary-bar .summary-submit-btn.submitted {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  cursor: default;
+  opacity: 0.75;
+}
+.race-summary-bar .summary-submit-btn.submitted:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: none;
+}
+.race-summary-bar .summary-submit-label {
+  font-size: 19px;
+  font-weight: 700;
+  color: #fff;
 }
 
 .race-attending-count { color: var(--success); }
