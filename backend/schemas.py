@@ -19,6 +19,8 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """Schema for partial user update."""
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
     gender: Optional[str] = None
 
 

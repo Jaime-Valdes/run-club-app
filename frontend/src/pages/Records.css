@@ -191,29 +191,6 @@
   font-weight: 400;
 }
 
-.record-bar {
-  width: 60px;
-  height: 6px;
-  background: var(--border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.record-bar-fill {
-  height: 100%;
-  background: var(--grad-primary);
-  border-radius: 3px;
-  transition: width 0.3s;
-}
-
-.record-rate {
-  font-size: 12px;
-  color: var(--muted);
-  font-weight: 600;
-  width: 32px;
-  text-align: right;
-}
-
 .run-item-btn {
   display: flex;
   align-items: center;
@@ -251,12 +228,17 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  color: var(--muted);
   font-size: 14px;
-  background: transparent;
+  color: #8a6d00;
+  background: rgba(234, 179, 8, 0.18);
 }
-.row-icon-btn:hover { background: var(--bg); color: var(--primary); }
-.row-icon-btn.row-icon-danger:hover { color: var(--danger); }
+.row-icon-btn:hover { background: rgba(234, 179, 8, 0.3); }
+
+.row-icon-btn.row-icon-danger {
+  color: var(--danger);
+  background: rgba(224, 60, 49, 0.12);
+}
+.row-icon-btn.row-icon-danger:hover { background: rgba(224, 60, 49, 0.22); }
 
 .back-btn {
   background: none;
@@ -873,7 +855,6 @@
   .sort-pill { padding: 5px 11px; font-size: 12px; }
   .export-btn { margin-left: 0; width: 100%; margin-top: 2px; text-align: center; }
 
-  .record-bar, .record-rate { display: none; }
   .record-count { font-size: 13px; }
   .record-name { font-size: 14px; }
   .record-sub { font-size: 11px; }

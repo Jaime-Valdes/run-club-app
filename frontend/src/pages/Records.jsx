@@ -7,9 +7,11 @@ import { getAttendanceForRun, getAttendanceForUser, getAllAttendanceForClub } fr
 import { getUserResults, saveResult, getAllResultsForClub } from "../api/races";
 import PageLoading from "../components/ui/PageLoading";
 import EditRunModal from "../components/ui/EditRunModal";
+import EditMemberModal from "../components/ui/EditMemberModal";
 import { formatTimeInput } from "../utils/format";
 import { toggleSortMode } from "../utils/sort";
 import { deleteRunWithConfirm } from "../utils/runActions";
+import { deleteUserWithConfirm } from "../utils/memberActions";
 import "./Records.css";
 
 function getStartOf(period) {
@@ -35,6 +37,7 @@ export default function Records() {
   const [runAttendees, setRunAttendees] = useState([]);
   const [runLoading, setRunLoading] = useState(false);
   const [editingRun, setEditingRun] = useState(null);
+  const [editingMember, setEditingMember] = useState(null);
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [memberHistory, setMemberHistory] = useState([]);
@@ -154,6 +157,17 @@ export default function Records() {
     e.stopPropagation();
     if (await deleteRunWithConfirm(run)) {
       setRuns((prev) => prev.filter((r) => r.id !== run.id));
+    }
+  }
+
+  function handleMemberSaved(updated) {
+    setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+  }
+
+  async function handleDeleteMember(member, e) {
+    e.stopPropagation();
+    if (await deleteUserWithConfirm(member)) {
+      setMembers((prev) => prev.filter((m) => m.id !== member.id));
     }
   }
 
@@ -443,7 +457,6 @@ export default function Records() {
               sortedMembers.map((member, i) => {
                 const count = memberStats[member.id] || 0;
                 const displayCount = sortModes.includes("range") ? (rangeStats[member.id] || 0) : count;
-                const rate = runs.length ? Math.round((count / runs.length) * 100) : 0;
                 return (
                   <div key={member.id} className="record-row record-row-clickable" onClick={() => handleSelectMember(member)}>
                     <div className="rank">#{i + 1}</div>
@@ -454,10 +467,10 @@ export default function Records() {
                     </div>
                     <div className="record-stats">
                       <div className="record-count">{displayCount} <span>runs</span></div>
-                      <div className="record-bar">
-                        <div className="record-bar-fill" style={{ width: `${rate}%` }} />
-                      </div>
-                      <div className="record-rate">{rate}%</div>
+                    </div>
+                    <div className="row-actions" onClick={(e) => e.stopPropagation()}>
+                      <button className="row-icon-btn" onClick={() => setEditingMember(member)} title="Edit">✎</button>
+                      <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteMember(member, e)} title="Delete">✕</button>
                     </div>
                     <span className="chevron">›</span>
                   </div>
@@ -547,6 +560,9 @@ export default function Records() {
 
       {editingRun && (
         <EditRunModal run={editingRun} onClose={() => setEditingRun(null)} onSaved={handleRunSaved} />
+      )}
+      {editingMember && (
+        <EditMemberModal member={editingMember} onClose={() => setEditingMember(null)} onSaved={handleMemberSaved} />
       )}
     </div>
   );

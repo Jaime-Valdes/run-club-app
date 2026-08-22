@@ -206,12 +206,17 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  color: var(--muted);
   font-size: 14px;
-  background: transparent;
+  color: #8a6d00;
+  background: rgba(234, 179, 8, 0.18);
 }
-.row-icon-btn:hover { background: var(--bg); color: var(--primary); }
-.row-icon-btn.row-icon-danger:hover { color: var(--danger); }
+.row-icon-btn:hover { background: rgba(234, 179, 8, 0.3); }
+
+.row-icon-btn.row-icon-danger {
+  color: var(--danger);
+  background: rgba(224, 60, 49, 0.12);
+}
+.row-icon-btn.row-icon-danger:hover { background: rgba(224, 60, 49, 0.22); }
 
 .muted { color: var(--muted); font-size: 14px; }
 

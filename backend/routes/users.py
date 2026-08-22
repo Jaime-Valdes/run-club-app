@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from database import supabase
 from schemas import UserCreate, UserUpdate, UserResponse
+from sheets import sync_attendance_sheet
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -28,18 +29,20 @@ def get_user(user_id: str):
 
 
 @router.patch("/{user_id}", response_model=UserResponse)
-def update_user(user_id: str, data: UserUpdate):
+def update_user(user_id: str, data: UserUpdate, background_tasks: BackgroundTasks):
     payload = data.model_dump(exclude_none=True)
     if not payload:
         raise HTTPException(status_code=400, detail="No fields to update")
     result = supabase.table("users").update(payload).eq("id", user_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="User not found")
+    background_tasks.add_task(sync_attendance_sheet)
     return result.data[0]
 
 
 @router.delete("/{user_id}", status_code=204)
-def delete_user(user_id: str):
+def delete_user(user_id: str, background_tasks: BackgroundTasks):
     result = supabase.table("users").delete().eq("id", user_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="User not found")
+    background_tasks.add_task(sync_attendance_sheet)
