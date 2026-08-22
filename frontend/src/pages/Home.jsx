@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useClub } from "../context/ClubContext";
 import { getRuns } from "../api/runs";
 import { getRaces } from "../api/races";
+import PageLoading from "../components/ui/PageLoading";
 import logo from "../assets/logo.svg";
 import "./Home.css";
 
@@ -29,7 +30,7 @@ export default function Home() {
   const liveSessions = sessions.filter((s) => s.is_live);
   const pastSessions = sessions.filter((s) => !s.is_live);
 
-  if (clubLoading) return <div className="page-loading">Loading...</div>;
+  if (clubLoading) return <PageLoading />;
 
   if (!club) {
     return (

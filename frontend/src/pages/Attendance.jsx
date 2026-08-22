@@ -7,6 +7,8 @@ import { checkIn, checkOut, getAttendanceForRun } from "../api/attendance";
 import { createUser } from "../api/users";
 import { createRace } from "../api/races";
 import { QRCodeSVG } from "qrcode.react";
+import PageLoading from "../components/ui/PageLoading";
+import { checkInOrigin } from "../utils/network";
 import "./Attendance.css";
 
 const RACE_DISTANCES = ["5k", "10k", "Half Marathon", "XC", "Track Meet"];
@@ -16,11 +18,6 @@ function nowEastern() {
   const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-
-const networkHost = import.meta.env.VITE_NETWORK_HOST;
-const checkInOrigin = networkHost
-  ? `${window.location.protocol}//${networkHost}${window.location.port ? `:${window.location.port}` : ""}`
-  : window.location.origin;
 
 export default function Attendance() {
   const { club } = useClub();
@@ -159,7 +156,7 @@ export default function Attendance() {
   const checkedInMembers = filteredMembers.filter((m) => attendees.includes(m.id));
   const notCheckedInMembers = filteredMembers.filter((m) => !attendees.includes(m.id));
 
-  if (!club || loading) return <div className="page-loading">Loading...</div>;
+  if (!club || loading) return <PageLoading />;
 
   return (
     <div className="attendance">

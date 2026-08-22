@@ -34,7 +34,7 @@ A web app for managing attendance and race records for the NYU Run Club.
 - **Frontend:** React + Vite
 - **Backend:** FastAPI (Python)
 - **Database:** Supabase (PostgreSQL)
-- **Deployment:** Vercel (frontend) + Railway (backend)
+- **Deployment:** Vercel (frontend) + Render (backend)
 
 ---
 
@@ -96,11 +96,11 @@ The app will be available at `http://localhost:5173`.
 
 ## Deployment
 
-The app is deployed on **Vercel** (frontend) and **Railway** (backend).
+The app is deployed on **Vercel** (frontend) and **Render** (backend).
 
 ### Required environment variables
 
-**Railway (backend):**
+**Render (backend):**
 | Variable | Description |
 |---|---|
 | `SUPABASE_URL` | Your Supabase project URL |
@@ -111,13 +111,13 @@ The app is deployed on **Vercel** (frontend) and **Railway** (backend).
 **Vercel (frontend):**
 | Variable | Description |
 |---|---|
-| `VITE_API_URL` | Your Railway backend URL (e.g. `https://your-app.up.railway.app`) |
+| `VITE_API_URL` | Your Render backend URL (e.g. `https://your-app.onrender.com`) |
 
 ---
 
 ## QR Code / Mobile Self Check-In
 
-In production (deployed to Vercel + Railway), the QR code works on any device over cellular or Wi-Fi — no configuration needed.
+In production (deployed to Vercel + Render), the QR code works on any device over cellular or Wi-Fi — no configuration needed.
 
 For local development with mobile testing on the same Wi-Fi network:
 
@@ -149,14 +149,14 @@ The app can automatically keep a Google Sheet up to date with full attendance da
 3. Create a **Service Account** (APIs & Services → Credentials → Create Credentials → Service Account)
 4. Under the service account's **Keys** tab, create a new JSON key and download it
 5. Create a Google Sheet and share it with the service account's `client_email` (Editor access)
-6. Add `GOOGLE_CREDENTIALS_JSON` (full JSON file contents) and `GOOGLE_SHEET_ID` (from the sheet URL) as Railway environment variables
+6. Add `GOOGLE_CREDENTIALS_JSON` (full JSON file contents) and `GOOGLE_SHEET_ID` (from the sheet URL) as Render environment variables
 
 ### Manual backfill
 
 To populate the sheet with all existing data (e.g. after initial setup), visit:
 
 ```
-https://your-railway-url.up.railway.app/sync-sheet
+https://your-render-url.onrender.com/sync-sheet
 ```
 
 This returns `{"status": "synced", "members": N, "rows_written": N}` on success.

@@ -4,21 +4,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { getUsers } from "../api/users";
 import { getRace, getResults, saveResult, deleteResult, updateRace } from "../api/races";
+import PageLoading from "../components/ui/PageLoading";
+import { formatTimeInput } from "../utils/format";
+import { checkInOrigin } from "../utils/network";
 import "./RaceDetail.css";
 
 const TYPE_LABELS = { road_xc: "Road / XC", track: "Track" };
-
-function formatTimeInput(raw) {
-  const digits = raw.replace(/\D/g, "").slice(0, 6);
-  if (digits.length < 4) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, digits.length - 2)}:${digits.slice(-2)}`;
-  return `${digits.slice(0, digits.length - 4)}:${digits.slice(-4, -2)}:${digits.slice(-2)}`;
-}
-
-const networkHost = import.meta.env.VITE_NETWORK_HOST;
-const checkInOrigin = networkHost
-  ? `${window.location.protocol}//${networkHost}${window.location.port ? `:${window.location.port}` : ""}`
-  : window.location.origin;
 
 export default function RaceDetail() {
   const { raceId } = useParams();
@@ -100,7 +91,7 @@ export default function RaceDetail() {
     .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
     .filter((m) => showAll || results[m.id]);
 
-  if (loading) return <div className="page-loading">Loading...</div>;
+  if (loading) return <PageLoading />;
   if (!race) return <div className="page-loading">Race not found.</div>;
 
   return (

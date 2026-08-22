@@ -4,6 +4,7 @@ import { getUsers } from "../api/users";
 import { getRun } from "../api/runs";
 import { getRace, getResults, saveResult } from "../api/races";
 import { checkIn, getAttendanceForRun } from "../api/attendance";
+import PageLoading from "../components/ui/PageLoading";
 import "./SelfCheckIn.css";
 
 export default function SelfCheckIn() {
@@ -86,7 +87,7 @@ export default function SelfCheckIn() {
     );
   }
 
-  if (loading) return <div className="sci-loading">Loading...</div>;
+  if (loading) return <PageLoading />;
   if (error) return <div className="sci-error"><div className="sci-error-icon">⚠️</div><p>{error}</p></div>;
 
   if (checkedInMember) {

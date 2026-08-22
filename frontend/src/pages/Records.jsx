@@ -5,14 +5,10 @@ import { getUsers } from "../api/users";
 import { getRuns } from "../api/runs";
 import { getAttendanceForRun, getAttendanceForUser, getAllAttendanceForClub } from "../api/attendance";
 import { getUserResults, saveResult, getAllResultsForClub } from "../api/races";
+import PageLoading from "../components/ui/PageLoading";
+import { formatTimeInput } from "../utils/format";
+import { toggleSortMode } from "../utils/sort";
 import "./Records.css";
-
-function formatTimeInput(raw) {
-  const digits = raw.replace(/\D/g, "").slice(0, 6);
-  if (digits.length < 4) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, digits.length - 2)}:${digits.slice(-2)}`;
-  return `${digits.slice(0, digits.length - 4)}:${digits.slice(-4, -2)}:${digits.slice(-2)}`;
-}
 
 function getStartOf(period) {
   const d = new Date();
@@ -95,10 +91,6 @@ export default function Records() {
   }, [sortModes, sortStart, sortEnd, runs, allAttendance]);
 
   const [exporting, setExporting] = useState(false);
-
-  function toggleSort(mode) {
-    setSortModes((prev) => prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]);
-  }
 
   function exportPractice() {
     const rows = runAttendees.map((member) => {
@@ -244,7 +236,7 @@ export default function Records() {
 
   const memberRangeCount = filteredCombined.filter((i) => i.type === "practice").length;
 
-  if (!club || loading) return <div className="page-loading">Loading...</div>;
+  if (!club || loading) return <PageLoading />;
 
   if (selectedMember) {
     return (
@@ -370,11 +362,11 @@ export default function Records() {
         </div>
         <div className="stat-card">
           <div className="stat-value">{weekCheckIns}</div>
-          <div className="stat-label">This Week</div>
+          <div className="stat-label">Attendances This Week</div>
         </div>
         <div className="stat-card">
           <div className="stat-value">{totalAttendances}</div>
-          <div className="stat-label">Yearly Total</div>
+          <div className="stat-label">Yearly Attendance Total</div>
         </div>
       </div>
 
@@ -391,13 +383,13 @@ export default function Records() {
         <>
           <div className="sort-row">
             <span className="sort-label">Sort By:</span>
-            <button className={`sort-pill ${sortModes.includes("total") ? "active" : ""}`} onClick={() => toggleSort("total")}>
+            <button className={`sort-pill ${sortModes.includes("total") ? "active" : ""}`} onClick={() => toggleSortMode(setSortModes, "total")}>
               Total attendances
             </button>
-            <button className={`sort-pill ${sortModes.includes("last_name") ? "active" : ""}`} onClick={() => toggleSort("last_name")}>
+            <button className={`sort-pill ${sortModes.includes("last_name") ? "active" : ""}`} onClick={() => toggleSortMode(setSortModes, "last_name")}>
               Last Name
             </button>
-            <button className={`sort-pill ${sortModes.includes("range") ? "active" : ""}`} onClick={() => toggleSort("range")}>
+            <button className={`sort-pill ${sortModes.includes("range") ? "active" : ""}`} onClick={() => toggleSortMode(setSortModes, "range")}>
               Date Range
             </button>
             <button className="export-btn" onClick={handleExport} disabled={exporting}>

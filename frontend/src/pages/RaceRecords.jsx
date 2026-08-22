@@ -8,17 +8,13 @@ import { useClub } from "../context/ClubContext";
 import { getUsers, updateUser } from "../api/users";
 import {
   getRaces, getUserResults, saveResult,
-  getTrackResults, getUserTrackResults, saveTrackResult, deleteTrackResult,
+  getUserTrackResults, saveTrackResult, deleteTrackResult,
   getAllResultsForClub, getAllTrackResultsForClub,
 } from "../api/races";
+import PageLoading from "../components/ui/PageLoading";
+import { formatTimeInput } from "../utils/format";
+import { toggleSortMode } from "../utils/sort";
 import "./Records.css";
-
-function formatTimeInput(raw) {
-  const digits = raw.replace(/\D/g, "").slice(0, 6);
-  if (digits.length < 4) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, digits.length - 2)}:${digits.slice(-2)}`;
-  return `${digits.slice(0, digits.length - 4)}:${digits.slice(-4, -2)}:${digits.slice(-2)}`;
-}
 
 function parseSeconds(t) {
   if (!t) return Infinity;
@@ -347,10 +343,6 @@ export default function RaceRecords() {
       .finally(() => setLoading(false));
   }, [club]);
 
-  function toggleSort(mode) {
-    setSortModes((prev) => prev.includes(mode) ? prev.filter((m) => m !== mode) : [...prev, mode]);
-  }
-
   async function handleSelectMember(member) {
     setSelectedMember(member);
     setResultsLoading(true);
@@ -480,7 +472,7 @@ export default function RaceRecords() {
 
   const filteredRaces = races.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()));
 
-  if (!club || loading) return <div className="page-loading">Loading...</div>;
+  if (!club || loading) return <PageLoading />;
 
   // ── Member detail view ───────────────────────────────────────────────────
   if (selectedMember) {
@@ -737,13 +729,13 @@ export default function RaceRecords() {
         <>
           <div className="sort-row">
             <span className="sort-label">Sort:</span>
-            <button className={`sort-pill ${sortModes.includes("total") ? "active" : ""}`} onClick={() => toggleSort("total")}>
+            <button className={`sort-pill ${sortModes.includes("total") ? "active" : ""}`} onClick={() => toggleSortMode(setSortModes, "total")}>
               # of Races
             </button>
-            <button className={`sort-pill ${sortModes.includes("last_name") ? "active" : ""}`} onClick={() => toggleSort("last_name")}>
+            <button className={`sort-pill ${sortModes.includes("last_name") ? "active" : ""}`} onClick={() => toggleSortMode(setSortModes, "last_name")}>
               Last Name
             </button>
-            <button className={`sort-pill ${sortModes.includes("pending") ? "active" : ""}`} onClick={() => toggleSort("pending")}>
+            <button className={`sort-pill ${sortModes.includes("pending") ? "active" : ""}`} onClick={() => toggleSortMode(setSortModes, "pending")}>
               Pending Times
             </button>
           </div>
