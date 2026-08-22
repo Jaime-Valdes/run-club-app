@@ -8,16 +8,13 @@ import { createUser } from "../api/users";
 import { createRace } from "../api/races";
 import { QRCodeSVG } from "qrcode.react";
 import PageLoading from "../components/ui/PageLoading";
+import EditRunModal from "../components/ui/EditRunModal";
 import { checkInOrigin } from "../utils/network";
+import { nowEastern } from "../utils/datetime";
+import { deleteRunWithConfirm } from "../utils/runActions";
 import "./Attendance.css";
 
 const RACE_DISTANCES = ["5k", "10k", "Half Marathon", "XC", "Track Meet"];
-
-function nowEastern() {
-  const pad = (n) => String(n).padStart(2, "0");
-  const d = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 export default function Attendance() {
   const { club } = useClub();
@@ -56,6 +53,8 @@ export default function Attendance() {
   const [newMember, setNewMember] = useState({ firstName: "", lastName: "", netId: "" });
   const [addingMember, setAddingMember] = useState(false);
   const [addMemberError, setAddMemberError] = useState("");
+
+  const [editingRun, setEditingRun] = useState(null);
 
   useEffect(() => {
     if (!club) return;
@@ -115,6 +114,18 @@ export default function Attendance() {
       setCreateError(err.message || "Failed to create race. Is the backend running?");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  function handleRunSaved(updated) {
+    setRuns((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    setActiveRun((prev) => (prev && prev.id === updated.id ? updated : prev));
+  }
+
+  async function handleDeleteRun(run, e) {
+    e.stopPropagation();
+    if (await deleteRunWithConfirm(run)) {
+      setRuns((prev) => prev.filter((r) => r.id !== run.id));
     }
   }
 
@@ -219,22 +230,27 @@ export default function Attendance() {
                   <h2 className="section-title">Or continue a recent practice</h2>
                   <div className="run-list card">
                     {runs.slice(0, 5).map((run) => (
-                      <button
-                        key={run.id}
-                        className="run-item-btn"
-                        onClick={() => { setActiveRun(run); setStep("checkin"); }}
-                      >
-                        <div>
-                          <div className="run-title">{run.title}</div>
-                          <div className="run-meta">
-                            {new Date(run.date).toLocaleDateString("en-US", {
-                              weekday: "short", month: "short", day: "numeric",
-                            })}
-                            {run.notes && ` · ${run.notes}`}
+                      <div key={run.id} className="run-item-row">
+                        <button
+                          className="run-item-btn"
+                          onClick={() => { setActiveRun(run); setStep("checkin"); }}
+                        >
+                          <div>
+                            <div className="run-title">{run.title}</div>
+                            <div className="run-meta">
+                              {new Date(run.date).toLocaleDateString("en-US", {
+                                weekday: "short", month: "short", day: "numeric",
+                              })}
+                              {run.notes && ` · ${run.notes}`}
+                            </div>
                           </div>
+                          <span className="chevron">›</span>
+                        </button>
+                        <div className="row-actions">
+                          <button className="row-icon-btn" onClick={() => setEditingRun(run)} title="Edit">✎</button>
+                          <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteRun(run, e)} title="Delete">✕</button>
                         </div>
-                        <span className="chevron">›</span>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -438,6 +454,10 @@ export default function Attendance() {
           </div>
 
         </>
+      )}
+
+      {editingRun && (
+        <EditRunModal run={editingRun} onClose={() => setEditingRun(null)} onSaved={handleRunSaved} />
       )}
     </div>
   );

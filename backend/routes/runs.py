@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from database import supabase
 from schemas import RunCreate, RunUpdate, RunResponse
+from sheets import sync_attendance_sheet
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -48,7 +49,8 @@ def update_run(run_id: str, data: RunUpdate):
 
 
 @router.delete("/{run_id}", status_code=204)
-def delete_run(run_id: str):
+def delete_run(run_id: str, background_tasks: BackgroundTasks):
     result = supabase.table("runs").delete().eq("id", run_id).execute()
     if not result.data:
         raise HTTPException(status_code=404, detail="Run not found")
+    background_tasks.add_task(sync_attendance_sheet)

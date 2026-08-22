@@ -12,8 +12,10 @@ import {
   getAllResultsForClub, getAllTrackResultsForClub,
 } from "../api/races";
 import PageLoading from "../components/ui/PageLoading";
+import EditRaceModal from "../components/ui/EditRaceModal";
 import { formatTimeInput } from "../utils/format";
 import { toggleSortMode } from "../utils/sort";
+import { deleteRaceWithConfirm } from "../utils/raceActions";
 import "./Records.css";
 
 function parseSeconds(t) {
@@ -275,6 +277,7 @@ export default function RaceRecords() {
   const navigate = useNavigate();
   const [members, setMembers] = useState([]);
   const [races, setRaces] = useState([]);
+  const [editingRace, setEditingRace] = useState(null);
   const [memberRaceCounts, setMemberRaceCounts] = useState({});
   const [memberPendingCounts, setMemberPendingCounts] = useState({});
   const [sortModes, setSortModes] = useState(["total"]);
@@ -342,6 +345,17 @@ export default function RaceRecords() {
       })
       .finally(() => setLoading(false));
   }, [club]);
+
+  function handleRaceSaved(updated) {
+    setRaces((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+  }
+
+  async function handleDeleteRace(race, e) {
+    e.stopPropagation();
+    if (await deleteRaceWithConfirm(race)) {
+      setRaces((prev) => prev.filter((r) => r.id !== race.id));
+    }
+  }
 
   async function handleSelectMember(member) {
     setSelectedMember(member);
@@ -842,20 +856,30 @@ export default function RaceRecords() {
             <p className="empty-state">No races yet</p>
           ) : (
             filteredRaces.map((race) => (
-              <button key={race.id} className="run-item-btn" onClick={() => navigate(`/race/${race.id}`)}>
-                <div>
-                  <div className="run-title">{race.title}</div>
-                  <div className="run-meta">
-                    {new Date(race.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
-                    {" · "}{race.distance}
-                    {race.location && ` · ${race.location}`}
+              <div key={race.id} className="run-item-row">
+                <button className="run-item-btn" onClick={() => navigate(`/race/${race.id}`)}>
+                  <div>
+                    <div className="run-title">{race.title}</div>
+                    <div className="run-meta">
+                      {new Date(race.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                      {" · "}{race.distance}
+                      {race.location && ` · ${race.location}`}
+                    </div>
                   </div>
+                  <span className="chevron">›</span>
+                </button>
+                <div className="row-actions">
+                  <button className="row-icon-btn" onClick={() => setEditingRace(race)} title="Edit">✎</button>
+                  <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteRace(race, e)} title="Delete">✕</button>
                 </div>
-                <span className="chevron">›</span>
-              </button>
+              </div>
             ))
           )}
         </div>
+      )}
+
+      {editingRace && (
+        <EditRaceModal race={editingRace} onClose={() => setEditingRace(null)} onSaved={handleRaceSaved} />
       )}
     </div>
   );

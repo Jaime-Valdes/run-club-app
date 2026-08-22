@@ -6,8 +6,10 @@ import { getRuns } from "../api/runs";
 import { getAttendanceForRun, getAttendanceForUser, getAllAttendanceForClub } from "../api/attendance";
 import { getUserResults, saveResult, getAllResultsForClub } from "../api/races";
 import PageLoading from "../components/ui/PageLoading";
+import EditRunModal from "../components/ui/EditRunModal";
 import { formatTimeInput } from "../utils/format";
 import { toggleSortMode } from "../utils/sort";
+import { deleteRunWithConfirm } from "../utils/runActions";
 import "./Records.css";
 
 function getStartOf(period) {
@@ -32,6 +34,7 @@ export default function Records() {
   const [selectedRun, setSelectedRun] = useState(null);
   const [runAttendees, setRunAttendees] = useState([]);
   const [runLoading, setRunLoading] = useState(false);
+  const [editingRun, setEditingRun] = useState(null);
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [memberHistory, setMemberHistory] = useState([]);
@@ -140,6 +143,17 @@ export default function Records() {
       XLSX.writeFile(wb, `${club.name || "run-club"}-attendance.xlsx`);
     } finally {
       setExporting(false);
+    }
+  }
+
+  function handleRunSaved(updated) {
+    setRuns((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+  }
+
+  async function handleDeleteRun(run, e) {
+    e.stopPropagation();
+    if (await deleteRunWithConfirm(run)) {
+      setRuns((prev) => prev.filter((r) => r.id !== run.id));
     }
   }
 
@@ -469,16 +483,22 @@ export default function Records() {
                 <p className="empty-state">No practices found</p>
               ) : (
                 filteredRuns.map((run) => (
-                  <button key={run.id} className="run-item-btn" onClick={() => handleSelectRun(run)}>
-                    <div>
-                      <div className="run-title">{run.title}</div>
-                      <div className="run-meta">
-                        {new Date(run.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-                        {run.notes && ` · ${run.notes}`}
+                  <div key={run.id} className="run-item-row">
+                    <button className="run-item-btn" onClick={() => handleSelectRun(run)}>
+                      <div>
+                        <div className="run-title">{run.title}</div>
+                        <div className="run-meta">
+                          {new Date(run.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                          {run.notes && ` · ${run.notes}`}
+                        </div>
                       </div>
+                      <span className="chevron">›</span>
+                    </button>
+                    <div className="row-actions">
+                      <button className="row-icon-btn" onClick={() => setEditingRun(run)} title="Edit">✎</button>
+                      <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteRun(run, e)} title="Delete">✕</button>
                     </div>
-                    <span className="chevron">›</span>
-                  </button>
+                  </div>
                 ))
               )}
             </div>
@@ -523,6 +543,10 @@ export default function Records() {
             </>
           )}
         </>
+      )}
+
+      {editingRun && (
+        <EditRunModal run={editingRun} onClose={() => setEditingRun(null)} onSaved={handleRunSaved} />
       )}
     </div>
   );

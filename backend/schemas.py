@@ -87,6 +87,7 @@ class RunUpdate(BaseModel):
     """Schema for partial run update."""
     is_live: Optional[bool] = None
     title: Optional[str] = None
+    date: Optional[datetime] = None
     notes: Optional[str] = None
 
 
@@ -143,6 +144,10 @@ class RaceCreate(RaceBase):
 
 class RaceUpdate(BaseModel):
     is_live: Optional[bool] = None
+    title: Optional[str] = None
+    date: Optional[datetime] = None
+    distance: Optional[str] = None
+    location: Optional[str] = None
 
 
 class RaceResponse(RaceBase):

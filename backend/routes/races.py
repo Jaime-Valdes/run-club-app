@@ -71,6 +71,14 @@ def get_race(race_id: str):
     return result.data[0]
 
 
+@router.delete("/{race_id}", status_code=204)
+def delete_race(race_id: str, background_tasks: BackgroundTasks):
+    result = supabase.table("races").delete().eq("id", race_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Race not found")
+    background_tasks.add_task(sync_attendance_sheet)
+
+
 @router.post("/{race_id}/results", response_model=RaceResultResponse, status_code=201)
 def save_result(race_id: str, body: RaceResultCreate, background_tasks: BackgroundTasks):
     data = body.model_dump(mode="json")

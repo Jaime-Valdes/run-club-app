@@ -4,6 +4,10 @@ import { useClub } from "../context/ClubContext";
 import { getRuns } from "../api/runs";
 import { getRaces } from "../api/races";
 import PageLoading from "../components/ui/PageLoading";
+import EditRunModal from "../components/ui/EditRunModal";
+import EditRaceModal from "../components/ui/EditRaceModal";
+import { deleteRunWithConfirm } from "../utils/runActions";
+import { deleteRaceWithConfirm } from "../utils/raceActions";
 import logo from "../assets/logo.svg";
 import "./Home.css";
 
@@ -12,6 +16,8 @@ export default function Home() {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingRun, setEditingRun] = useState(null);
+  const [editingRace, setEditingRace] = useState(null);
 
   useEffect(() => {
     if (!club) return;
@@ -29,6 +35,22 @@ export default function Home() {
 
   const liveSessions = sessions.filter((s) => s.is_live);
   const pastSessions = sessions.filter((s) => !s.is_live);
+
+  function handleRunSaved(updated) {
+    setSessions((prev) => prev.map((s) => (s.id === updated.id ? { ...updated, type: "practice" } : s)));
+  }
+
+  function handleRaceSaved(updated) {
+    setSessions((prev) => prev.map((s) => (s.id === updated.id ? { ...updated, type: "race" } : s)));
+  }
+
+  async function handleDeleteSession(item, e) {
+    e.stopPropagation();
+    const confirmed = item.type === "race" ? await deleteRaceWithConfirm(item) : await deleteRunWithConfirm(item);
+    if (confirmed) {
+      setSessions((prev) => prev.filter((s) => s.id !== item.id));
+    }
+  }
 
   if (clubLoading) return <PageLoading />;
 
@@ -75,6 +97,16 @@ export default function Home() {
                   {item.type === "race" && item.distance && ` · ${item.distance}`}
                 </div>
               </div>
+              <div className="row-actions" onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="row-icon-btn"
+                  onClick={() => (item.type === "race" ? setEditingRace(item) : setEditingRun(item))}
+                  title="Edit"
+                >
+                  ✎
+                </button>
+                <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteSession(item, e)} title="Delete">✕</button>
+              </div>
               <div className="live-card-cta">Join →</div>
             </div>
           ))}
@@ -114,12 +146,29 @@ export default function Home() {
                     {item.type === "race" && item.distance && ` · ${item.distance}`}
                   </div>
                 </div>
+                <div className="row-actions" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="row-icon-btn"
+                    onClick={() => (item.type === "race" ? setEditingRace(item) : setEditingRun(item))}
+                    title="Edit"
+                  >
+                    ✎
+                  </button>
+                  <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteSession(item, e)} title="Delete">✕</button>
+                </div>
                 <span className="session-chevron">›</span>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {editingRun && (
+        <EditRunModal run={editingRun} onClose={() => setEditingRun(null)} onSaved={handleRunSaved} />
+      )}
+      {editingRace && (
+        <EditRaceModal race={editingRace} onClose={() => setEditingRace(null)} onSaved={handleRaceSaved} />
+      )}
     </div>
   );
 }
