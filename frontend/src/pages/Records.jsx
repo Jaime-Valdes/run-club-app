@@ -237,6 +237,11 @@ export default function Records() {
     r.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  const runAttendeeCounts = {};
+  allAttendance.forEach((rec) => {
+    runAttendeeCounts[rec.run_id] = (runAttendeeCounts[rec.run_id] || 0) + 1;
+  });
+
   const combinedHistory = [
     ...memberHistory.map((r) => ({
       type: "practice",
@@ -498,13 +503,14 @@ export default function Records() {
                 filteredRuns.map((run) => (
                   <div key={run.id} className="run-item-row">
                     <button className="run-item-btn" onClick={() => handleSelectRun(run)}>
-                      <div>
+                      <div className="run-item-main">
                         <div className="run-title">{run.title}</div>
                         <div className="run-meta">
                           {new Date(run.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                           {run.notes && ` · ${run.notes}`}
                         </div>
                       </div>
+                      <span className="attendee-count">{runAttendeeCounts[run.id] || 0} attendees</span>
                       <span className="chevron">›</span>
                     </button>
                     <div className="row-actions">

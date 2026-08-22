@@ -112,6 +112,15 @@
   margin-left: 12px;
 }
 
+.attendee-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
 .sessions-section { flex: 1; }
 
 .section-title {

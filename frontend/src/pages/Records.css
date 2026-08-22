@@ -206,9 +206,20 @@
 .run-item-btn:last-child { border-bottom: none; }
 .run-item-btn:hover { background: var(--bg); }
 
+.run-item-main { flex: 1; min-width: 0; }
+
 .run-title { font-weight: 600; font-size: 15px; }
 .run-meta { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .chevron { font-size: 22px; color: var(--muted); }
+
+.attendee-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
 
 .run-item-row { display: flex; align-items: center; border-bottom: 1px solid var(--border); }
 .run-item-row:last-child { border-bottom: none; }

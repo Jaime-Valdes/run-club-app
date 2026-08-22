@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useClub } from "../context/ClubContext";
 import { getUsers } from "../api/users";
 import { getRuns, createRun, updateRun } from "../api/runs";
-import { checkIn, checkOut, getAttendanceForRun } from "../api/attendance";
+import { checkIn, checkOut, getAttendanceForRun, getAllAttendanceForClub } from "../api/attendance";
 import { createUser } from "../api/users";
 import { createRace } from "../api/races";
 import { QRCodeSVG } from "qrcode.react";
@@ -55,13 +55,19 @@ export default function Attendance() {
   const [addMemberError, setAddMemberError] = useState("");
 
   const [editingRun, setEditingRun] = useState(null);
+  const [runAttendeeCounts, setRunAttendeeCounts] = useState({});
 
   useEffect(() => {
     if (!club) return;
-    Promise.all([getRuns(club.id), getUsers()])
-      .then(([runsData, users]) => {
+    Promise.all([getRuns(club.id), getUsers(), getAllAttendanceForClub(club.id)])
+      .then(([runsData, users, attendance]) => {
         setRuns(runsData);
         setMembers(users);
+        const counts = {};
+        attendance.forEach((rec) => {
+          counts[rec.run_id] = (counts[rec.run_id] || 0) + 1;
+        });
+        setRunAttendeeCounts(counts);
         if (preselectedRunId) {
           const found = runsData.find((r) => r.id === preselectedRunId);
           if (found) setActiveRun(found);
@@ -235,7 +241,7 @@ export default function Attendance() {
                           className="run-item-btn"
                           onClick={() => { setActiveRun(run); setStep("checkin"); }}
                         >
-                          <div>
+                          <div className="run-item-main">
                             <div className="run-title">{run.title}</div>
                             <div className="run-meta">
                               {new Date(run.date).toLocaleDateString("en-US", {
@@ -244,6 +250,7 @@ export default function Attendance() {
                               {run.notes && ` · ${run.notes}`}
                             </div>
                           </div>
+                          <span className="attendee-count">{runAttendeeCounts[run.id] || 0} attendees</span>
                           <span className="chevron">›</span>
                         </button>
                         <div className="row-actions">

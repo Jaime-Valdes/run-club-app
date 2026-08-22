@@ -296,6 +296,7 @@ export default function RaceRecords() {
   const [selectedTrackPREvent, setSelectedTrackPREvent] = useState(null);
   const [allResultsFlat, setAllResultsFlat] = useState([]);
   const [allTrackFlat, setAllTrackFlat] = useState([]);
+  const [raceAttendeeCounts, setRaceAttendeeCounts] = useState({});
 
   useEffect(() => {
     if (!club) return;
@@ -334,6 +335,12 @@ export default function RaceRecords() {
         });
         setMemberRaceCounts(counts);
         setMemberPendingCounts(pending);
+
+        const raceCounts = {};
+        allResultsRaw.forEach((res) => {
+          raceCounts[res.race_id] = (raceCounts[res.race_id] || 0) + 1;
+        });
+        setRaceAttendeeCounts(raceCounts);
 
         const flat = allResultsRaw
           .filter((res) => raceMap[res.race_id]?.race_type !== "track")
@@ -858,7 +865,7 @@ export default function RaceRecords() {
             filteredRaces.map((race) => (
               <div key={race.id} className="run-item-row">
                 <button className="run-item-btn" onClick={() => navigate(`/race/${race.id}`)}>
-                  <div>
+                  <div className="run-item-main">
                     <div className="run-title">{race.title}</div>
                     <div className="run-meta">
                       {new Date(race.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
@@ -866,6 +873,7 @@ export default function RaceRecords() {
                       {race.location && ` · ${race.location}`}
                     </div>
                   </div>
+                  <span className="attendee-count">{raceAttendeeCounts[race.id] || 0} attendees</span>
                   <span className="chevron">›</span>
                 </button>
                 <div className="row-actions">

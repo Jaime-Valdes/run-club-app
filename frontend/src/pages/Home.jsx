@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClub } from "../context/ClubContext";
 import { getRuns } from "../api/runs";
-import { getRaces } from "../api/races";
+import { getRaces, getAllResultsForClub } from "../api/races";
+import { getAllAttendanceForClub } from "../api/attendance";
 import PageLoading from "../components/ui/PageLoading";
 import EditRunModal from "../components/ui/EditRunModal";
 import EditRaceModal from "../components/ui/EditRaceModal";
@@ -18,11 +19,21 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [editingRun, setEditingRun] = useState(null);
   const [editingRace, setEditingRace] = useState(null);
+  const [attendeeCounts, setAttendeeCounts] = useState({});
 
   useEffect(() => {
     if (!club) return;
-    Promise.all([getRuns(club.id), getRaces(club.id)])
-      .then(([runs, races]) => {
+    Promise.all([getRuns(club.id), getRaces(club.id), getAllAttendanceForClub(club.id), getAllResultsForClub(club.id)])
+      .then(([runs, races, attendance, results]) => {
+        const counts = {};
+        attendance.forEach((rec) => {
+          counts[rec.run_id] = (counts[rec.run_id] || 0) + 1;
+        });
+        results.forEach((res) => {
+          counts[res.race_id] = (counts[res.race_id] || 0) + 1;
+        });
+        setAttendeeCounts(counts);
+
         const merged = [
           ...runs.map((r) => ({ ...r, type: "practice" })),
           ...races.map((r) => ({ ...r, type: "race" })),
@@ -97,6 +108,7 @@ export default function Home() {
                   {item.type === "race" && item.distance && ` · ${item.distance}`}
                 </div>
               </div>
+              <span className="attendee-count">{attendeeCounts[item.id] || 0} attendees</span>
               <div className="live-card-cta">Join →</div>
               <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                 <button
@@ -146,6 +158,7 @@ export default function Home() {
                     {item.type === "race" && item.distance && ` · ${item.distance}`}
                   </div>
                 </div>
+                <span className="attendee-count">{attendeeCounts[item.id] || 0} attendees</span>
                 <span className="session-chevron">›</span>
                 <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                   <button
