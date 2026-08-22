@@ -250,7 +250,7 @@ export default function Attendance() {
                               {run.notes && ` · ${run.notes}`}
                             </div>
                           </div>
-                          <span className="attendee-count">{runAttendeeCounts[run.id] || 0} attendees</span>
+                          <span className="attendee-count">{runAttendeeCounts[run.id] || 0} <span>attendees</span></span>
                           <span className="chevron">›</span>
                         </button>
                         <div className="row-actions">

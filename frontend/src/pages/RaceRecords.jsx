@@ -873,7 +873,7 @@ export default function RaceRecords() {
                       {race.location && ` · ${race.location}`}
                     </div>
                   </div>
-                  <span className="attendee-count">{raceAttendeeCounts[race.id] || 0} attendees</span>
+                  <span className="attendee-count">{raceAttendeeCounts[race.id] || 0} <span>attendees</span></span>
                   <span className="chevron">›</span>
                 </button>
                 <div className="row-actions">

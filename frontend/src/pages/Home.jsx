@@ -108,7 +108,7 @@ export default function Home() {
                   {item.type === "race" && item.distance && ` · ${item.distance}`}
                 </div>
               </div>
-              <span className="attendee-count">{attendeeCounts[item.id] || 0} attendees</span>
+              <span className="attendee-count">{attendeeCounts[item.id] || 0} <span>attendees</span></span>
               <div className="live-card-cta">Join →</div>
               <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                 <button
@@ -158,7 +158,7 @@ export default function Home() {
                     {item.type === "race" && item.distance && ` · ${item.distance}`}
                   </div>
                 </div>
-                <span className="attendee-count">{attendeeCounts[item.id] || 0} attendees</span>
+                <span className="attendee-count">{attendeeCounts[item.id] || 0} <span>attendees</span></span>
                 <span className="session-chevron">›</span>
                 <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                   <button
