@@ -97,6 +97,7 @@ export default function Home() {
                   {item.type === "race" && item.distance && ` · ${item.distance}`}
                 </div>
               </div>
+              <div className="live-card-cta">Join →</div>
               <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                 <button
                   className="row-icon-btn"
@@ -107,7 +108,6 @@ export default function Home() {
                 </button>
                 <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteSession(item, e)} title="Delete">✕</button>
               </div>
-              <div className="live-card-cta">Join →</div>
             </div>
           ))}
         </div>
@@ -146,6 +146,7 @@ export default function Home() {
                     {item.type === "race" && item.distance && ` · ${item.distance}`}
                   </div>
                 </div>
+                <span className="session-chevron">›</span>
                 <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                   <button
                     className="row-icon-btn"
@@ -156,7 +157,6 @@ export default function Home() {
                   </button>
                   <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteSession(item, e)} title="Delete">✕</button>
                 </div>
-                <span className="session-chevron">›</span>
               </div>
             ))}
           </div>

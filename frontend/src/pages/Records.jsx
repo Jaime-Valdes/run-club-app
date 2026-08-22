@@ -468,11 +468,11 @@ export default function Records() {
                     <div className="record-stats">
                       <div className="record-count">{displayCount} <span>runs</span></div>
                     </div>
+                    <span className="chevron">›</span>
                     <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                       <button className="row-icon-btn" onClick={() => setEditingMember(member)} title="Edit">✎</button>
                       <button className="row-icon-btn row-icon-danger" onClick={(e) => handleDeleteMember(member, e)} title="Delete">✕</button>
                     </div>
-                    <span className="chevron">›</span>
                   </div>
                 );
               })
