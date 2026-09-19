@@ -100,7 +100,7 @@ export default function RaceDetail() {
         <div className="submit-banner">✓ Race results submitted successfully!</div>
       )}
 
-      <button className="back-btn" onClick={() => navigate("/attendance")}>← Back</button>
+      <button className="back-btn" onClick={() => navigate(-1)}>← Back</button>
 
       <div className="race-header">
         <div className="race-type-badge">{TYPE_LABELS[race.race_type] || race.race_type}</div>

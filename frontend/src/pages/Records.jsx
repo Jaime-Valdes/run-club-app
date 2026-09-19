@@ -16,7 +16,7 @@ import "./Records.css";
 
 function getStartOf(period) {
   const d = new Date();
-  if (period === "week") d.setDate(d.getDate() - d.getDay());
+  if (period === "week") d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   else if (period === "month") d.setDate(1);
   else if (period === "year") d.setMonth(0, 1);
   d.setHours(0, 0, 0, 0);
@@ -36,6 +36,7 @@ export default function Records() {
   const [selectedRun, setSelectedRun] = useState(null);
   const [runAttendees, setRunAttendees] = useState([]);
   const [runLoading, setRunLoading] = useState(false);
+  const [sortAttendeesByLastName, setSortAttendeesByLastName] = useState(false);
   const [editingRun, setEditingRun] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
 
@@ -539,6 +540,17 @@ export default function Records() {
                   <strong>{runLoading ? "—" : runAttendees.length}</strong> / {members.length} members attended
                 </div>
               </div>
+              {!runLoading && runAttendees.length > 0 && (
+                <div className="sort-row">
+                  <span className="sort-label">Sort By:</span>
+                  <button
+                    className={`sort-pill ${sortAttendeesByLastName ? "active" : ""}`}
+                    onClick={() => setSortAttendeesByLastName((v) => !v)}
+                  >
+                    Last Name
+                  </button>
+                </div>
+              )}
               {runLoading ? (
                 <p className="page-loading">Loading attendees...</p>
               ) : (
@@ -546,7 +558,14 @@ export default function Records() {
                   {runAttendees.length === 0 ? (
                     <p className="empty-state">No one checked in for this practice</p>
                   ) : (
-                    runAttendees.map((member) => (
+                    [...runAttendees]
+                      .sort((a, b) => {
+                        if (!sortAttendeesByLastName) return 0;
+                        const aLast = a.name.split(" ").slice(-1)[0].toLowerCase();
+                        const bLast = b.name.split(" ").slice(-1)[0].toLowerCase();
+                        return aLast.localeCompare(bLast);
+                      })
+                      .map((member) => (
                       <div key={member.id} className="record-row">
                         <div className="member-avatar">{member.name[0].toUpperCase()}</div>
                         <div className="record-info">
