@@ -320,6 +320,40 @@
   margin-top: 2px;
 }
 
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.sort-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-right: 2px;
+}
+
+.sort-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--card);
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+  transition: all 0.15s;
+}
+.sort-pill.active {
+  background: var(--grad-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(87, 6, 140, 0.22);
+}
+
 .search-add-row {
   display: flex;
   align-items: center;

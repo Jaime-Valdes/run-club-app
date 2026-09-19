@@ -56,6 +56,7 @@ export default function Attendance() {
 
   const [editingRun, setEditingRun] = useState(null);
   const [runAttendeeCounts, setRunAttendeeCounts] = useState({});
+  const [sortByLastName, setSortByLastName] = useState(false);
 
   useEffect(() => {
     if (!club) return;
@@ -168,7 +169,14 @@ export default function Attendance() {
 
   const filteredMembers = members
     .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      if (sortByLastName) {
+        const aLast = a.name.split(" ").slice(-1)[0].toLowerCase();
+        const bLast = b.name.split(" ").slice(-1)[0].toLowerCase();
+        return aLast.localeCompare(bLast);
+      }
+      return a.name.localeCompare(b.name);
+    });
 
   const checkedInMembers = filteredMembers.filter((m) => attendees.includes(m.id));
   const notCheckedInMembers = filteredMembers.filter((m) => !attendees.includes(m.id));
@@ -372,6 +380,16 @@ export default function Attendance() {
               fgColor="#57068c"
               level="M"
             />
+          </div>
+
+          <div className="sort-row">
+            <span className="sort-label">Sort By:</span>
+            <button
+              className={`sort-pill ${sortByLastName ? "active" : ""}`}
+              onClick={() => setSortByLastName((v) => !v)}
+            >
+              Last Name
+            </button>
           </div>
 
           <div className="search-add-row">
