@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useClub } from "../context/ClubContext";
 import { getUsers } from "../api/users";
 import { getRuns } from "../api/runs";
@@ -21,6 +22,98 @@ function getStartOf(period) {
   else if (period === "year") d.setMonth(0, 1);
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+function bucketStart(date, period) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  if (period === "week") d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  else d.setDate(1);
+  return d;
+}
+
+function nextBucket(date, period) {
+  const d = new Date(date);
+  if (period === "week") d.setDate(d.getDate() + 7);
+  else d.setMonth(d.getMonth() + 1);
+  return d;
+}
+
+function bucketLabel(date, period) {
+  return period === "week"
+    ? date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+}
+
+function AttendanceTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="chart-tooltip">
+      <div className="chart-tooltip-date">{d.tooltipLabel}</div>
+      <div className="chart-tooltip-time">
+        {d.count} {d.count === 1 ? "practice" : "practices"}
+      </div>
+    </div>
+  );
+}
+
+function AttendanceChart({ practiceDates, rangeStart, rangeEnd, period, onPeriodChange }) {
+  const times = practiceDates.map((d) => d.getTime());
+  const start = rangeStart || (times.length ? new Date(Math.min(...times)) : null);
+  const end = rangeEnd || (times.length ? new Date(Math.max(...times)) : null);
+
+  const counts = new Map();
+  if (start && end && start <= end) {
+    for (let b = bucketStart(start, period); b <= end; b = nextBucket(b, period)) {
+      counts.set(b.getTime(), 0);
+    }
+  }
+  practiceDates.forEach((d) => {
+    const key = bucketStart(d, period).getTime();
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+
+  const data = [...counts.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([time, count]) => {
+      const date = new Date(time);
+      const label = bucketLabel(date, period);
+      return {
+        label,
+        count,
+        tooltipLabel: period === "week" ? `Week of ${label}` : date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      };
+    });
+
+  return (
+    <div className="pr-chart-card card attendance-chart-card">
+      <div className="attendance-chart-header">
+        <div className="pr-chart-title">Practices · By {period === "week" ? "Week" : "Month"}</div>
+        <div className="attendance-chart-toggle">
+          <button className={`sort-pill ${period === "week" ? "active" : ""}`} onClick={() => onPeriodChange("week")}>
+            Week
+          </button>
+          <button className={`sort-pill ${period === "month" ? "active" : ""}`} onClick={() => onPeriodChange("month")}>
+            Month
+          </button>
+        </div>
+      </div>
+      {data.length === 0 ? (
+        <p className="empty-state">No practices in this range</p>
+      ) : (
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={data} margin={{ top: 10, right: 16, left: -16, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted)" }} tickLine={false} axisLine={false} minTickGap={12} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "var(--muted)" }} tickLine={false} axisLine={false} />
+            <Tooltip content={<AttendanceTooltip />} cursor={{ fill: "var(--primary-glow)" }} />
+            <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={36} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
 }
 
 export default function Records() {
@@ -52,6 +145,7 @@ export default function Records() {
     return d.toISOString().slice(0, 10);
   });
   const [detailEnd, setDetailEnd] = useState(() => new Date().toISOString().slice(0, 10));
+  const [chartPeriod, setChartPeriod] = useState("month");
 
   const [sortModes, setSortModes] = useState(["total"]);
   const [sortStart, setSortStart] = useState(() => {
@@ -295,6 +389,16 @@ export default function Records() {
             <div className="stat-label">In Range</div>
           </div>
         </div>
+
+        {!historyLoading && (
+          <AttendanceChart
+            practiceDates={filteredCombined.filter((i) => i.type === "practice").map((i) => i.date)}
+            rangeStart={detailStart ? new Date(detailStart + "T00:00:00") : null}
+            rangeEnd={detailEnd ? new Date(detailEnd + "T23:59:59") : null}
+            period={chartPeriod}
+            onPeriodChange={setChartPeriod}
+          />
+        )}
 
         <div className="range-row">
           <input

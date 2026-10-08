@@ -474,6 +474,29 @@
   margin-bottom: 12px;
 }
 
+.attendance-chart-card {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.attendance-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.attendance-chart-header .pr-chart-title {
+  margin-bottom: 0;
+}
+
+.attendance-chart-toggle {
+  display: flex;
+  gap: 6px;
+}
+
 .chart-tooltip {
   background: var(--card);
   border: 1px solid var(--border);
