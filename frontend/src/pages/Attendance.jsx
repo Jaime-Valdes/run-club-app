@@ -57,6 +57,7 @@ export default function Attendance() {
   const [editingRun, setEditingRun] = useState(null);
   const [runAttendeeCounts, setRunAttendeeCounts] = useState({});
   const [sortByLastName, setSortByLastName] = useState(false);
+  const [checkinError, setCheckinError] = useState("");
 
   useEffect(() => {
     if (!club) return;
@@ -138,12 +139,22 @@ export default function Attendance() {
 
   async function toggleAttendance(userId) {
     const isCheckedIn = attendees.includes(userId);
-    if (isCheckedIn) {
-      await checkOut(activeRun.id, userId);
-      setAttendees((prev) => prev.filter((id) => id !== userId));
-    } else {
-      await checkIn(activeRun.id, userId);
-      setAttendees((prev) => [...prev, userId]);
+    setCheckinError("");
+    try {
+      if (isCheckedIn) {
+        await checkOut(activeRun.id, userId);
+        setAttendees((prev) => prev.filter((id) => id !== userId));
+      } else {
+        await checkIn(activeRun.id, userId);
+        setAttendees((prev) => [...prev, userId]);
+      }
+    } catch (err) {
+      if (!isCheckedIn && err.message === "Member already checked in") {
+        setAttendees((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
+      } else if (isCheckedIn && err.message === "Member already checked out") {
+        setAttendees((prev) => prev.filter((id) => id !== userId));
+      }
+      setCheckinError(err.message || "Failed to update attendance.");
     }
   }
 
@@ -441,6 +452,8 @@ export default function Attendance() {
               </button>
             </form>
           )}
+
+          {checkinError && <p className="form-error">{checkinError}</p>}
 
           <div className="member-list card">
             {filteredMembers.length === 0 ? (

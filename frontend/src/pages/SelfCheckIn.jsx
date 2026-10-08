@@ -68,7 +68,12 @@ export default function SelfCheckIn() {
       localStorage.setItem(storageKey, JSON.stringify(member));
       setCheckedInMember(member);
     } catch (err) {
-      setError(err.message);
+      if (err.message === "Member already checked in") {
+        localStorage.setItem(storageKey, JSON.stringify(member));
+        setCheckedInMember(member);
+      } else {
+        setError(err.message);
+      }
     } finally {
       setSubmitting(false);
     }

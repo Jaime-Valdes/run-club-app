@@ -1,4 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from postgrest.exceptions import APIError
 from database import supabase
 from schemas import UserCreate, UserUpdate, UserResponse
 from sheets import sync_attendance_sheet
@@ -8,7 +9,16 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 @router.post("/", response_model=UserResponse, status_code=201)
 def create_user(user: UserCreate):
-    result = supabase.table("users").insert(user.model_dump()).execute()
+    try:
+        result = supabase.table("users").insert(user.model_dump()).execute()
+    except APIError as e:
+        if e.code == "23505":
+            net_id = user.email.split("@")[0]
+            raise HTTPException(
+                status_code=409,
+                detail=f"A member with NetID {net_id} is already in the system. Search for them in the list instead.",
+            )
+        raise
     if not result.data:
         raise HTTPException(status_code=400, detail="Failed to create user")
     return result.data[0]
