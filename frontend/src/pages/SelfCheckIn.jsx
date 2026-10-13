@@ -128,7 +128,7 @@ export default function SelfCheckIn() {
 
       <div className="sci-list">
         {filtered.length === 0 ? (
-          <p className="sci-empty">No members found</p>
+          <p className="sci-empty">Name not found. Please see an eboard member to be added!</p>
         ) : (
           filtered.map((member) => (
             <button
