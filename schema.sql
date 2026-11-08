@@ -30,6 +30,7 @@ create table if not exists runs (
   date       timestamptz not null,
   notes      text,
   is_live    boolean default false,
+  dse_submitted boolean not null default false,
   created_by uuid,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -54,6 +55,7 @@ create table if not exists races (
   location   text,
   notes      text,
   is_live    boolean default false,
+  dse_submitted boolean not null default false,
   created_by uuid,
   created_at timestamptz default now(),
   updated_at timestamptz default now()

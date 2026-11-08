@@ -11,7 +11,7 @@ import EditRunModal from "../components/ui/EditRunModal";
 import EditMemberModal from "../components/ui/EditMemberModal";
 import DseStatusBadge from "../components/ui/DseStatusBadge";
 import ImportDseModal from "../components/ui/ImportDseModal";
-import { hasDseRoster } from "../utils/dse";
+import { dseActiveFirst, hasDseRoster } from "../utils/dse";
 import { formatTimeInput, pluralize } from "../utils/format";
 import { nowEastern } from "../utils/datetime";
 import { toggleSortMode } from "../utils/sort";
@@ -175,6 +175,7 @@ export default function Records() {
   const [runAttendees, setRunAttendees] = useState([]);
   const [runLoading, setRunLoading] = useState(false);
   const [sortAttendeesByLastName, setSortAttendeesByLastName] = useState(false);
+  const [sortAttendeesByDse, setSortAttendeesByDse] = useState(false);
   const [editingRun, setEditingRun] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
   const [importingDse, setImportingDse] = useState(false);
@@ -703,6 +704,14 @@ export default function Records() {
                   >
                     Last Name
                   </button>
+                  {showDse && (
+                    <button
+                      className={`sort-pill ${sortAttendeesByDse ? "active" : ""}`}
+                      onClick={() => setSortAttendeesByDse((v) => !v)}
+                    >
+                      DSE Status
+                    </button>
+                  )}
                 </div>
               )}
               {runLoading ? (
@@ -714,6 +723,10 @@ export default function Records() {
                   ) : (
                     [...runAttendees]
                       .sort((a, b) => {
+                        if (sortAttendeesByDse) {
+                          const diff = dseActiveFirst(a, b);
+                          if (diff !== 0) return diff;
+                        }
                         if (!sortAttendeesByLastName) return 0;
                         const aLast = a.name.split(" ").slice(-1)[0].toLowerCase();
                         const bLast = b.name.split(" ").slice(-1)[0].toLowerCase();

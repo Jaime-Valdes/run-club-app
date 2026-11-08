@@ -96,6 +96,7 @@ class RunCreate(RunBase):
 class RunUpdate(BaseModel):
     """Schema for partial run update."""
     is_live: Optional[bool] = None
+    dse_submitted: Optional[bool] = None
     title: Optional[str] = None
     date: Optional[datetime] = None
     notes: Optional[str] = None
@@ -104,6 +105,7 @@ class RunUpdate(BaseModel):
 class RunResponse(RunBase):
     """Schema for run response."""
     id: str
+    dse_submitted: Optional[bool] = False
     club_id: str
     created_by: Optional[str] = None
     created_at: datetime
@@ -154,6 +156,7 @@ class RaceCreate(RaceBase):
 
 class RaceUpdate(BaseModel):
     is_live: Optional[bool] = None
+    dse_submitted: Optional[bool] = None
     title: Optional[str] = None
     date: Optional[datetime] = None
     distance: Optional[str] = None
@@ -162,6 +165,7 @@ class RaceUpdate(BaseModel):
 
 class RaceResponse(RaceBase):
     id: str
+    dse_submitted: Optional[bool] = False
     club_id: str
     created_by: Optional[str] = None
     created_at: datetime

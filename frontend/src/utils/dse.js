@@ -4,6 +4,13 @@ export function hasDseRoster(members) {
   return members.some((m) => m.dse_status);
 }
 
+const isDseActive = (member) => (member.dse_status || "").trim().toLowerCase() === "approved-active";
+
+// Sort comparator that puts Approved-Active members first and leaves the rest in order.
+export function dseActiveFirst(a, b) {
+  return isDseActive(b) - isDseActive(a);
+}
+
 const EMAIL = /\S+@\S+\.\S+/;
 
 function normalizeName(name) {

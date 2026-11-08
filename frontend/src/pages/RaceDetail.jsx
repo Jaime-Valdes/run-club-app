@@ -7,6 +7,7 @@ import { getRace, getResults, checkInToRace, saveResult, deleteResult, updateRac
 import { useServerDown } from "../api/serverStatus";
 import PageLoading from "../components/ui/PageLoading";
 import CheckInRoster from "../components/ui/CheckInRoster";
+import DseSubmittedButton from "../components/ui/DseSubmittedButton";
 import { formatTimeInput } from "../utils/format";
 import { checkInOrigin } from "../utils/network";
 import "./RaceDetail.css";
@@ -166,6 +167,7 @@ export default function RaceDetail() {
           <span>{race.distance}</span>
           {race.location && <><span className="race-dot">·</span><span>{race.location}</span></>}
         </div>
+        <DseSubmittedButton session={race} type="race" onSaved={setRace} />
       </div>
 
       <div className="attendance-summary">

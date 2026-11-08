@@ -8,6 +8,7 @@ import { useServerDown } from "../api/serverStatus";
 import PageLoading from "../components/ui/PageLoading";
 import EditRunModal from "../components/ui/EditRunModal";
 import EditRaceModal from "../components/ui/EditRaceModal";
+import DseSubmittedButton from "../components/ui/DseSubmittedButton";
 import { deleteRunWithConfirm } from "../utils/runActions";
 import { deleteRaceWithConfirm } from "../utils/raceActions";
 import { pluralize } from "../utils/format";
@@ -110,6 +111,7 @@ export default function Home() {
                   {item.type === "practice" && item.notes && ` · ${item.notes}`}
                   {item.type === "race" && item.distance && ` · ${item.distance}`}
                 </div>
+                <DseSubmittedButton session={item} type={item.type} onSaved={item.type === "race" ? handleRaceSaved : handleRunSaved} />
               </div>
               <span className="attendee-count">{attendeeCounts[item.id] || 0} <span>{pluralize(attendeeCounts[item.id] || 0, "attendee")}</span></span>
               <div className="live-card-cta">Join →</div>
@@ -160,6 +162,7 @@ export default function Home() {
                     {item.type === "practice" && item.notes && ` · ${item.notes}`}
                     {item.type === "race" && item.distance && ` · ${item.distance}`}
                   </div>
+                  <DseSubmittedButton session={item} type={item.type} onSaved={item.type === "race" ? handleRaceSaved : handleRunSaved} />
                 </div>
                 <span className="attendee-count">{attendeeCounts[item.id] || 0} <span>{pluralize(attendeeCounts[item.id] || 0, "attendee")}</span></span>
                 <span className="session-chevron">›</span>

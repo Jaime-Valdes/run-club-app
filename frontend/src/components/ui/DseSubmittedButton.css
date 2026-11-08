@@ -1,0 +1,40 @@
+.dse-submitted {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 8px;
+}
+
+.dse-submitted-btn {
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.dse-submitted-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.dse-submitted-btn.checked,
+.dse-submitted-btn.checked:hover:not(:disabled) {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.dse-submitted-btn:disabled { opacity: 0.6; }
+
+.dse-submitted-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+}

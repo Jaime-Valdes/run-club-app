@@ -9,6 +9,7 @@ import { QRCodeSVG } from "qrcode.react";
 import PageLoading from "../components/ui/PageLoading";
 import EditRunModal from "../components/ui/EditRunModal";
 import CheckInRoster from "../components/ui/CheckInRoster";
+import DseSubmittedButton from "../components/ui/DseSubmittedButton";
 import { checkInOrigin } from "../utils/network";
 import { easternInputToISO, nowEastern } from "../utils/datetime";
 import { pluralize } from "../utils/format";
@@ -340,6 +341,7 @@ export default function Attendance() {
               })}
               {activeRun.notes && ` · ${activeRun.notes}`}
             </p>
+            <DseSubmittedButton session={activeRun} type="practice" onSaved={handleRunSaved} />
           </div>
 
           <div className="attendance-summary">

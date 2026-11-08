@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createUser } from "../../api/users";
 import DseStatusBadge from "./DseStatusBadge";
-import { hasDseRoster } from "../../utils/dse";
+import { dseActiveFirst, hasDseRoster } from "../../utils/dse";
 
 const EMPTY_MEMBER = { firstName: "", lastName: "", netId: "" };
 
@@ -17,6 +17,7 @@ export default function CheckInRoster({
 }) {
   const [search, setSearch] = useState("");
   const [sortByLastName, setSortByLastName] = useState(false);
+  const [sortByDse, setSortByDse] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
   const [newMember, setNewMember] = useState(EMPTY_MEMBER);
   const [addingMember, setAddingMember] = useState(false);
@@ -43,6 +44,10 @@ export default function CheckInRoster({
   const filteredMembers = members
     .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
+      if (sortByDse) {
+        const diff = dseActiveFirst(a, b);
+        if (diff !== 0) return diff;
+      }
       if (sortByLastName) {
         const aLast = a.name.split(" ").slice(-1)[0].toLowerCase();
         const bLast = b.name.split(" ").slice(-1)[0].toLowerCase();
@@ -65,6 +70,14 @@ export default function CheckInRoster({
         >
           Last Name
         </button>
+        {showDse && (
+          <button
+            className={`sort-pill ${sortByDse ? "active" : ""}`}
+            onClick={() => setSortByDse((v) => !v)}
+          >
+            DSE Status
+          </button>
+        )}
         {toolbar}
       </div>
 
