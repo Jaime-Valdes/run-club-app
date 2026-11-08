@@ -17,6 +17,8 @@ create table if not exists users (
   email      text unique not null,
   name       text not null,
   gender     text default 'man',  -- 'man' | 'woman'
+  dse_status text,                -- status from the DSE roster; null means not on it
+  dse_email  text,                -- roster email, saved when linked by hand on import
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

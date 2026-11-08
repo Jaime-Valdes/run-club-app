@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { createUser } from "../../api/users";
+import DseStatusBadge from "./DseStatusBadge";
+import { hasDseRoster } from "../../utils/dse";
 
 const EMPTY_MEMBER = { firstName: "", lastName: "", netId: "" };
 
@@ -49,6 +51,7 @@ export default function CheckInRoster({
       return a.name.localeCompare(b.name);
     });
 
+  const showDse = hasDseRoster(members);
   const checkedInMembers = filteredMembers.filter((m) => checkedInIds.includes(m.id));
   const notCheckedInMembers = filteredMembers.filter((m) => !checkedInIds.includes(m.id));
 
@@ -126,7 +129,7 @@ export default function CheckInRoster({
               <div key={member.id} className="member-item checked">
                 <div className="member-avatar">{member.name[0].toUpperCase()}</div>
                 <div className="member-info">
-                  <div className="member-name">{member.name}</div>
+                  <div className="member-name">{member.name}{showDse && <DseStatusBadge status={member.dse_status} />}</div>
                   <div className="member-email">{member.email?.split("@")[0]}</div>
                 </div>
                 {renderCheckedExtra?.(member)}
@@ -142,7 +145,7 @@ export default function CheckInRoster({
               <div key={member.id} className="member-item">
                 <div className="member-avatar">{member.name[0].toUpperCase()}</div>
                 <div className="member-info">
-                  <div className="member-name">{member.name}</div>
+                  <div className="member-name">{member.name}{showDse && <DseStatusBadge status={member.dse_status} />}</div>
                   <div className="member-email">{member.email?.split("@")[0]}</div>
                 </div>
                 <button className="checkin-btn" onClick={() => onToggle(member.id)}>

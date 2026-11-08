@@ -1,0 +1,35 @@
+.dse-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Record rows clip to one line, which would cut the card off on phones. */
+.record-name:has(.dse-badge) {
+  white-space: normal;
+  overflow: visible;
+}
+
+.dse-badge-good { background: rgba(42, 157, 92, 0.14); color: #1e7a45; }
+.dse-badge-warn { background: rgba(234, 179, 8, 0.2); color: #8a6d00; }
+.dse-badge-bad { background: rgba(224, 60, 49, 0.12); color: var(--danger); }
+.dse-badge-neutral { background: var(--border); color: var(--muted); }
+.dse-badge-none { background: var(--danger); color: #fff; }
+
+/* Name columns get narrow on phones, so the card takes its own line. */
+@media (max-width: 600px) {
+  .record-name .dse-badge,
+  .member-name .dse-badge {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 2px 0 0;
+    white-space: normal;
+  }
+}

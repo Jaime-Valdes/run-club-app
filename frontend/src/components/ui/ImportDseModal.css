@@ -1,0 +1,119 @@
+.modal-card.dse-import-modal {
+  max-width: 640px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.dse-import-help {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.dse-import-text {
+  display: block;
+  width: 100%;
+  height: 110px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 13px;
+  outline: none;
+  resize: vertical;
+}
+
+.dse-import-text:focus {
+  border-color: var(--primary);
+  box-shadow: var(--focus-ring);
+}
+
+.dse-import-preview { margin-bottom: 12px; }
+
+.dse-import-summary {
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 6px;
+}
+
+.dse-import-section { margin-top: 12px; }
+
+.dse-import-section h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dse-import-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 2px 0 6px;
+}
+
+.dse-import-addall {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--primary-glow);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dse-import-list {
+  max-height: 230px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.dse-import-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dse-import-row:last-child { border-bottom: none; }
+
+.dse-import-who { flex: 1 1 200px; min-width: 0; }
+.dse-import-name { font-size: 14px; font-weight: 600; }
+
+.dse-import-email {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.dse-import-action {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.dse-import-action select,
+.dse-import-action input {
+  width: 100%;
+  padding: 7px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+
+.dse-import-action select:focus,
+.dse-import-action input:focus { border-color: var(--primary); }
+
+.modal-card .dse-import-preview .form-error { margin: 8px 0 0; }

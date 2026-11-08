@@ -9,6 +9,9 @@ import { getRaces, getUserResults, saveResult, getAllResultsForClub } from "../a
 import PageLoading from "../components/ui/PageLoading";
 import EditRunModal from "../components/ui/EditRunModal";
 import EditMemberModal from "../components/ui/EditMemberModal";
+import DseStatusBadge from "../components/ui/DseStatusBadge";
+import ImportDseModal from "../components/ui/ImportDseModal";
+import { hasDseRoster } from "../utils/dse";
 import { formatTimeInput, pluralize } from "../utils/format";
 import { nowEastern } from "../utils/datetime";
 import { toggleSortMode } from "../utils/sort";
@@ -174,6 +177,7 @@ export default function Records() {
   const [sortAttendeesByLastName, setSortAttendeesByLastName] = useState(false);
   const [editingRun, setEditingRun] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
+  const [importingDse, setImportingDse] = useState(false);
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [memberHistory, setMemberHistory] = useState([]);
@@ -275,6 +279,14 @@ export default function Records() {
     }
   }
 
+  function handleDseImported(statuses, links) {
+    setMembers((prev) => prev.map((m) => ({
+      ...m,
+      dse_status: statuses[m.id] ?? null,
+      dse_email: links[m.id] ?? m.dse_email,
+    })));
+  }
+
   function handleMemberSaved(updated) {
     setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
   }
@@ -329,6 +341,7 @@ export default function Records() {
     }
   }
 
+  const showDse = hasDseRoster(members);
   const checkIns = [...allAttendance, ...allRaceResults];
   const sessions = [...runs, ...races];
   const memberStats = tallyCheckIns(checkIns, sessions).perMember;
@@ -406,7 +419,7 @@ export default function Records() {
         <div className="member-detail-header card">
           <div className="member-avatar-lg">{selectedMember.name[0].toUpperCase()}</div>
           <div className="member-detail-info">
-            <div className="member-detail-name">{selectedMember.name}</div>
+            <div className="member-detail-name">{selectedMember.name}{showDse && <DseStatusBadge status={selectedMember.dse_status} />}</div>
             <div className="member-detail-email">{selectedMember.email}</div>
           </div>
         </div>
@@ -562,9 +575,14 @@ export default function Records() {
             <button className={`sort-pill ${sortModes.includes("range") ? "active" : ""}`} onClick={() => toggleSortMode(setSortModes, "range")}>
               Date Range
             </button>
-            <button className="export-btn" onClick={handleExport} disabled={exporting}>
-              {exporting ? "Exporting…" : "⬇ Export to spreadsheet"}
-            </button>
+            <div className="records-actions">
+              <button className="import-dse-btn" onClick={() => setImportingDse(true)}>
+                Import DSE roster
+              </button>
+              <button className="export-btn" onClick={handleExport} disabled={exporting}>
+                {exporting ? "Exporting…" : "⬇ Export to spreadsheet"}
+              </button>
+            </div>
           </div>
 
           {sortModes.includes("range") && (
@@ -604,7 +622,7 @@ export default function Records() {
                     <div className="rank">#{i + 1}</div>
                     <div className="member-avatar">{member.name[0].toUpperCase()}</div>
                     <div className="record-info">
-                      <div className="record-name">{member.name}</div>
+                      <div className="record-name">{member.name}{showDse && <DseStatusBadge status={member.dse_status} />}</div>
                       <div className="record-sub">{member.email}</div>
                     </div>
                     <div className="record-stats">
@@ -705,7 +723,7 @@ export default function Records() {
                       <div key={member.id} className="record-row">
                         <div className="member-avatar">{member.name[0].toUpperCase()}</div>
                         <div className="record-info">
-                          <div className="record-name">{member.name}</div>
+                          <div className="record-name">{member.name}{showDse && <DseStatusBadge status={member.dse_status} />}</div>
                           <div className="record-sub">{member.email}</div>
                         </div>
                         <div className="present-badge">✓ Present</div>
@@ -721,6 +739,14 @@ export default function Records() {
 
       {editingRun && (
         <EditRunModal run={editingRun} onClose={() => setEditingRun(null)} onSaved={handleRunSaved} />
+      )}
+      {importingDse && (
+        <ImportDseModal
+          members={members}
+          onClose={() => setImportingDse(false)}
+          onImported={handleDseImported}
+          onMemberAdded={(user) => setMembers((prev) => [...prev, user])}
+        />
       )}
       {editingMember && (
         <EditMemberModal member={editingMember} onClose={() => setEditingMember(null)} onSaved={handleMemberSaved} />

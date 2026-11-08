@@ -657,6 +657,34 @@
   opacity: 0.6;
 }
 
+.records-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.records-actions .export-btn { margin-left: 0; }
+
+.import-dse-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #55cced 0%, #02b3e3 100%);
+  color: var(--primary-dark);
+  border: none;
+  box-shadow: 0 2px 8px rgba(2, 179, 227, 0.3);
+  transition: opacity 0.15s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.import-dse-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
 .pending-count-badge {
   font-size: 11px;
   font-weight: 700;
@@ -899,6 +927,7 @@
   .sort-row { gap: 5px; }
   .sort-pill { padding: 5px 11px; font-size: 12px; }
   .export-btn { margin-left: 0; width: 100%; margin-top: 2px; text-align: center; }
+  .records-actions { width: 100%; align-items: stretch; margin-left: 0; }
 
   .record-count { font-size: 13px; }
   .record-name { font-size: 14px; }

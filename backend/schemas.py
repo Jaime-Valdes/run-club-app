@@ -27,11 +27,19 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     """Schema for user response."""
     id: str
+    dse_status: Optional[str] = None
+    dse_email: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class DseStatusImport(BaseModel):
+    """Maps user id to status. Members left out are no longer on the DSE roster."""
+    statuses: dict[str, str]
+    links: dict[str, str] = {}  # user id to roster email, for members linked by hand
 
 
 class ClubBase(BaseModel):

@@ -13,6 +13,8 @@ import {
 } from "../api/races";
 import PageLoading from "../components/ui/PageLoading";
 import EditRaceModal from "../components/ui/EditRaceModal";
+import DseStatusBadge from "../components/ui/DseStatusBadge";
+import { hasDseRoster } from "../utils/dse";
 import { formatTimeInput, pluralize } from "../utils/format";
 import { toggleSortMode } from "../utils/sort";
 import { deleteRaceWithConfirm } from "../utils/raceActions";
@@ -472,6 +474,8 @@ export default function RaceRecords() {
     }
   });
 
+  const showDse = hasDseRoster(members);
+
   // ── Sorted member list ───────────────────────────────────────────────────
   const sortedMembers = [...members]
     .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
@@ -511,7 +515,7 @@ export default function RaceRecords() {
         <div className="member-detail-header card">
           <div className="member-avatar-lg">{selectedMember.name[0].toUpperCase()}</div>
           <div className="member-detail-info" style={{ flex: 1 }}>
-            <div className="member-detail-name">{selectedMember.name}</div>
+            <div className="member-detail-name">{selectedMember.name}{showDse && <DseStatusBadge status={selectedMember.dse_status} />}</div>
             <div className="member-detail-email">{selectedMember.email}</div>
           </div>
           <div className="gender-toggle">
@@ -775,6 +779,7 @@ export default function RaceRecords() {
                     <div className="record-info">
                       <div className="record-name">
                         {member.name}
+                        {showDse && <DseStatusBadge status={member.dse_status} />}
                         {pendingCount > 0 && (
                           <span className="pending-count-badge" title={`${pendingCount} result${pendingCount !== 1 ? "s" : ""} missing time`}>
                             {pendingCount} ⏱
