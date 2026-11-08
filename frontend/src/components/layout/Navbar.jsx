@@ -11,7 +11,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <NavLink to="/" className="navbar-brand">
+        <NavLink to="/" className="navbar-brand" aria-label={club?.name || "Run Club"}>
           <img src={logo} alt="" className="navbar-icon" />
           <span>{club?.name || "Run Club"}</span>
         </NavLink>

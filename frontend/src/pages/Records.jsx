@@ -5,15 +5,51 @@ import { useClub } from "../context/ClubContext";
 import { getUsers } from "../api/users";
 import { getRuns } from "../api/runs";
 import { getAttendanceForRun, getAttendanceForUser, getAllAttendanceForClub } from "../api/attendance";
-import { getUserResults, saveResult, getAllResultsForClub } from "../api/races";
+import { getRaces, getUserResults, saveResult, getAllResultsForClub } from "../api/races";
 import PageLoading from "../components/ui/PageLoading";
 import EditRunModal from "../components/ui/EditRunModal";
 import EditMemberModal from "../components/ui/EditMemberModal";
-import { formatTimeInput } from "../utils/format";
+import { formatTimeInput, pluralize } from "../utils/format";
+import { nowEastern } from "../utils/datetime";
 import { toggleSortMode } from "../utils/sort";
 import { deleteRunWithConfirm } from "../utils/runActions";
 import { deleteUserWithConfirm } from "../utils/memberActions";
 import "./Records.css";
+
+// A check-in is either an attendance row (practice) or a race_results row (race).
+const sessionIdOf = (checkIn) => checkIn.run_id ?? checkIn.race_id;
+
+// Counts check-ins at sessions dated within [from, to). Omit a bound to leave it open.
+function tallyCheckIns(checkIns, sessions, from, to) {
+  const sessionIds = new Set(
+    sessions
+      .filter((s) => {
+        const d = new Date(s.date);
+        return (!from || d >= from) && (!to || d < to);
+      })
+      .map((s) => s.id)
+  );
+  const perMember = {};
+  let total = 0;
+  checkIns.forEach((rec) => {
+    if (!sessionIds.has(sessionIdOf(rec))) return;
+    perMember[rec.user_id] = (perMember[rec.user_id] || 0) + 1;
+    total += 1;
+  });
+  return { perMember, total };
+}
+
+const todayInput = () => nowEastern().slice(0, 10);
+const yearStartInput = () => `${todayInput().slice(0, 4)}-01-01`;
+const startOfDay = (input) => new Date(`${input}T00:00:00`);
+const endOfDay = (input) => new Date(`${input}T23:59:59.999`);
+
+// Sep 1 through May 15. Over the summer this stays on the year that just ended.
+function academicYear() {
+  const now = new Date();
+  const startYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+  return { start: new Date(startYear, 8, 1), end: new Date(startYear + 1, 4, 16) };
+}
 
 function getStartOf(period) {
   const d = new Date();
@@ -52,36 +88,43 @@ function AttendanceTooltip({ active, payload }) {
     <div className="chart-tooltip">
       <div className="chart-tooltip-date">{d.tooltipLabel}</div>
       <div className="chart-tooltip-time">
-        {d.count} {d.count === 1 ? "practice" : "practices"}
+        {d.count} {pluralize(d.count, "run")}
+      </div>
+      <div className="chart-tooltip-breakdown">
+        {d.practices} {pluralize(d.practices, "practice")} · {d.races} {pluralize(d.races, "race")}
       </div>
     </div>
   );
 }
 
-function AttendanceChart({ practiceDates, rangeStart, rangeEnd, period, onPeriodChange }) {
-  const times = practiceDates.map((d) => d.getTime());
+function AttendanceChart({ sessions, rangeStart, rangeEnd, period, onPeriodChange }) {
+  const times = sessions.map((s) => s.date.getTime());
   const start = rangeStart || (times.length ? new Date(Math.min(...times)) : null);
   const end = rangeEnd || (times.length ? new Date(Math.max(...times)) : null);
 
-  const counts = new Map();
+  const buckets = new Map();
   if (start && end && start <= end) {
     for (let b = bucketStart(start, period); b <= end; b = nextBucket(b, period)) {
-      counts.set(b.getTime(), 0);
+      buckets.set(b.getTime(), { practices: 0, races: 0 });
     }
   }
-  practiceDates.forEach((d) => {
-    const key = bucketStart(d, period).getTime();
-    counts.set(key, (counts.get(key) || 0) + 1);
+  sessions.forEach(({ date, type }) => {
+    const key = bucketStart(date, period).getTime();
+    const bucket = buckets.get(key) || { practices: 0, races: 0 };
+    bucket[type === "race" ? "races" : "practices"] += 1;
+    buckets.set(key, bucket);
   });
 
-  const data = [...counts.entries()]
+  const data = [...buckets.entries()]
     .sort((a, b) => a[0] - b[0])
-    .map(([time, count]) => {
+    .map(([time, { practices, races }]) => {
       const date = new Date(time);
       const label = bucketLabel(date, period);
       return {
         label,
-        count,
+        count: practices + races,
+        practices,
+        races,
         tooltipLabel: period === "week" ? `Week of ${label}` : date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
       };
     });
@@ -89,7 +132,7 @@ function AttendanceChart({ practiceDates, rangeStart, rangeEnd, period, onPeriod
   return (
     <div className="pr-chart-card card attendance-chart-card">
       <div className="attendance-chart-header">
-        <div className="pr-chart-title">Practices · By {period === "week" ? "Week" : "Month"}</div>
+        <div className="pr-chart-title">Runs · By {period === "week" ? "Week" : "Month"}</div>
         <div className="attendance-chart-toggle">
           <button className={`sort-pill ${period === "week" ? "active" : ""}`} onClick={() => onPeriodChange("week")}>
             Week
@@ -100,7 +143,7 @@ function AttendanceChart({ practiceDates, rangeStart, rangeEnd, period, onPeriod
         </div>
       </div>
       {data.length === 0 ? (
-        <p className="empty-state">No practices in this range</p>
+        <p className="empty-state">No runs in this range</p>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={data} margin={{ top: 10, right: 16, left: -16, bottom: 4 }}>
@@ -120,11 +163,10 @@ export default function Records() {
   const { club } = useClub();
   const [members, setMembers] = useState([]);
   const [runs, setRuns] = useState([]);
-  const [memberStats, setMemberStats] = useState({});
+  const [races, setRaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("members");
   const [search, setSearch] = useState("");
-  const [weekCheckIns, setWeekCheckIns] = useState(0);
 
   const [selectedRun, setSelectedRun] = useState(null);
   const [runAttendees, setRunAttendees] = useState([]);
@@ -140,56 +182,29 @@ export default function Records() {
   const [pendingTimes, setPendingTimes] = useState({});
   const [savingTime, setSavingTime] = useState({});
 
-  const [detailStart, setDetailStart] = useState(() => {
-    const d = new Date(); d.setMonth(0, 1); d.setHours(0, 0, 0, 0);
-    return d.toISOString().slice(0, 10);
-  });
-  const [detailEnd, setDetailEnd] = useState(() => new Date().toISOString().slice(0, 10));
+  const [detailStart, setDetailStart] = useState(yearStartInput);
+  const [detailEnd, setDetailEnd] = useState(todayInput);
   const [chartPeriod, setChartPeriod] = useState("month");
 
   const [sortModes, setSortModes] = useState(["total"]);
-  const [sortStart, setSortStart] = useState(() => {
-    const d = new Date(); d.setMonth(0, 1); d.setHours(0, 0, 0, 0);
-    return d.toISOString().slice(0, 10);
-  });
-  const [sortEnd, setSortEnd] = useState(() => new Date().toISOString().slice(0, 10));
+  const [sortStart, setSortStart] = useState(yearStartInput);
+  const [sortEnd, setSortEnd] = useState(todayInput);
   const [allAttendance, setAllAttendance] = useState([]);
-  const [rangeStats, setRangeStats] = useState({});
+  const [allRaceResults, setAllRaceResults] = useState([]);
 
   useEffect(() => {
     if (!club) return;
-    Promise.all([getUsers(), getRuns(club.id), getAllAttendanceForClub(club.id)])
-      .then(([users, runsData, rawAttendance]) => {
+    Promise.all([getUsers(), getRuns(club.id), getAllAttendanceForClub(club.id), getRaces(club.id), getAllResultsForClub(club.id)])
+      .then(([users, runsData, rawAttendance, racesData, raceResults]) => {
         setMembers(users);
         setRuns(runsData);
+        setRaces(racesData);
         setAllAttendance(rawAttendance);
-
-        const statsMap = {};
-        rawAttendance.forEach((rec) => {
-          statsMap[rec.user_id] = (statsMap[rec.user_id] || 0) + 1;
-        });
-        setMemberStats(statsMap);
-
-        const weekStart = getStartOf("week");
-        const weekRunIds = new Set(runsData.filter((r) => new Date(r.date) >= weekStart).map((r) => r.id));
-        setWeekCheckIns(rawAttendance.filter((rec) => weekRunIds.has(rec.run_id)).length);
+        setAllRaceResults(raceResults);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [club]);
-
-  useEffect(() => {
-    if (!sortModes.includes("range") || !sortStart || !sortEnd || allAttendance.length === 0) return;
-    const start = new Date(sortStart);
-    const end = new Date(sortEnd + "T23:59:59");
-    const rangeRunIds = new Set(
-      runs.filter((r) => { const d = new Date(r.date); return d >= start && d <= end; }).map((r) => r.id)
-    );
-    const stats = {};
-    allAttendance.filter((rec) => rangeRunIds.has(rec.run_id)).forEach((rec) => {
-      stats[rec.user_id] = (stats[rec.user_id] || 0) + 1;
-    });
-    setRangeStats(stats);
-  }, [sortModes, sortStart, sortEnd, runs, allAttendance]);
 
   const [exporting, setExporting] = useState(false);
 
@@ -218,12 +233,16 @@ export default function Records() {
       allResults.forEach((r) => {
         racesPerUser[r.user_id] = (racesPerUser[r.user_id] || 0) + 1;
       });
+      const practicesPerUser = {};
+      allAttendance.forEach((r) => {
+        practicesPerUser[r.user_id] = (practicesPerUser[r.user_id] || 0) + 1;
+      });
 
       const rows = sortedMembers.map((member) => {
         const nameParts = member.name.trim().split(" ");
         const firstName = nameParts[0];
         const lastName = nameParts.slice(1).join(" ");
-        const practices = memberStats[member.id] || 0;
+        const practices = practicesPerUser[member.id] || 0;
         const races = racesPerUser[member.id] || 0;
         return {
           "First Name": firstName,
@@ -252,6 +271,7 @@ export default function Records() {
     e.stopPropagation();
     if (await deleteRunWithConfirm(run)) {
       setRuns((prev) => prev.filter((r) => r.id !== run.id));
+      setAllAttendance((prev) => prev.filter((rec) => rec.run_id !== run.id));
     }
   }
 
@@ -263,6 +283,8 @@ export default function Records() {
     e.stopPropagation();
     if (await deleteUserWithConfirm(member)) {
       setMembers((prev) => prev.filter((m) => m.id !== member.id));
+      setAllAttendance((prev) => prev.filter((rec) => rec.user_id !== member.id));
+      setAllRaceResults((prev) => prev.filter((rec) => rec.user_id !== member.id));
     }
   }
 
@@ -307,7 +329,19 @@ export default function Records() {
     }
   }
 
-  const totalAttendances = Object.values(memberStats).reduce((a, b) => a + b, 0);
+  const checkIns = [...allAttendance, ...allRaceResults];
+  const sessions = [...runs, ...races];
+  const memberStats = tallyCheckIns(checkIns, sessions).perMember;
+  const weekStart = getStartOf("week");
+  const weekCheckIns = tallyCheckIns(checkIns, sessions, weekStart, nextBucket(weekStart, "week")).total;
+  const year = academicYear();
+  const yearCheckIns = tallyCheckIns(checkIns, sessions, year.start, year.end).total;
+  const rangeStats = tallyCheckIns(
+    checkIns,
+    sessions,
+    sortStart ? startOfDay(sortStart) : null,
+    sortEnd ? endOfDay(sortEnd) : null
+  ).perMember;
 
   const sortedMembers = [...members]
     .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
@@ -357,12 +391,10 @@ export default function Records() {
   ].sort((a, b) => b.date - a.date);
 
   const filteredCombined = combinedHistory.filter((item) => {
-    if (detailStart) { const s = new Date(detailStart); if (item.date < s) return false; }
-    if (detailEnd) { const e = new Date(detailEnd + "T23:59:59"); if (item.date > e) return false; }
+    if (detailStart && item.date < startOfDay(detailStart)) return false;
+    if (detailEnd && item.date > endOfDay(detailEnd)) return false;
     return true;
   });
-
-  const memberRangeCount = filteredCombined.filter((i) => i.type === "practice").length;
 
   if (!club || loading) return <PageLoading />;
 
@@ -381,18 +413,18 @@ export default function Records() {
 
         <div className="stats-row" style={{ gridTemplateColumns: "1fr 1fr" }}>
           <div className="stat-card">
-            <div className="stat-value">{combinedHistory.filter(i => i.type === "practice").length}</div>
+            <div className="stat-value">{combinedHistory.length}</div>
             <div className="stat-label">All Time</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{memberRangeCount}</div>
+            <div className="stat-value">{filteredCombined.length}</div>
             <div className="stat-label">In Range</div>
           </div>
         </div>
 
         {!historyLoading && (
           <AttendanceChart
-            practiceDates={filteredCombined.filter((i) => i.type === "practice").map((i) => i.date)}
+            sessions={filteredCombined}
             rangeStart={detailStart ? new Date(detailStart + "T00:00:00") : null}
             rangeEnd={detailEnd ? new Date(detailEnd + "T23:59:59") : null}
             period={chartPeriod}
@@ -503,7 +535,7 @@ export default function Records() {
           <div className="stat-label">Attendances This Week</div>
         </div>
         <div className="stat-card">
-          <div className="stat-value">{totalAttendances}</div>
+          <div className="stat-value">{yearCheckIns}</div>
           <div className="stat-label">Yearly Attendance Total</div>
         </div>
       </div>
@@ -576,7 +608,7 @@ export default function Records() {
                       <div className="record-sub">{member.email}</div>
                     </div>
                     <div className="record-stats">
-                      <div className="record-count">{displayCount} <span>runs</span></div>
+                      <div className="record-count">{displayCount} <span>{pluralize(displayCount, "run")}</span></div>
                     </div>
                     <span className="chevron">›</span>
                     <div className="row-actions" onClick={(e) => e.stopPropagation()}>
@@ -615,7 +647,7 @@ export default function Records() {
                           {run.notes && ` · ${run.notes}`}
                         </div>
                       </div>
-                      <span className="attendee-count">{runAttendeeCounts[run.id] || 0} <span>attendees</span></span>
+                      <span className="attendee-count">{runAttendeeCounts[run.id] || 0} <span>{pluralize(runAttendeeCounts[run.id] || 0, "attendee")}</span></span>
                       <span className="chevron">›</span>
                     </button>
                     <div className="row-actions">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { updateRace } from "../../api/races";
-import { dateToEasternInputValue } from "../../utils/datetime";
+import { dateToEasternInputValue, easternInputToISO } from "../../utils/datetime";
 import "./Modal.css";
 
 export default function EditRaceModal({ race, onClose, onSaved }) {
@@ -18,7 +18,7 @@ export default function EditRaceModal({ race, onClose, onSaved }) {
     setSaving(true);
     setError("");
     try {
-      const updated = await updateRace(race.id, form);
+      const updated = await updateRace(race.id, { ...form, date: easternInputToISO(form.date) });
       onSaved(updated);
       onClose();
     } catch (err) {

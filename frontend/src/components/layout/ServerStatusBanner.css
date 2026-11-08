@@ -1,0 +1,29 @@
+.server-banner {
+  position: sticky;
+  top: 58px;
+  z-index: 99;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  padding: 10px 16px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.server-banner-retry {
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .server-banner { top: 50px; font-size: 13px; }
+}

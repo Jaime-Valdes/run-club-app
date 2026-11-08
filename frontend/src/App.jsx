@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ClubProvider } from "./context/ClubContext";
 import Navbar from "./components/layout/Navbar";
+import ServerStatusBanner from "./components/layout/ServerStatusBanner";
 import Home from "./pages/Home";
 import Attendance from "./pages/Attendance";
 import Records from "./pages/Records";
@@ -15,6 +16,7 @@ export default function App() {
       <BrowserRouter>
         <div className="app">
           <Navbar />
+          <ServerStatusBanner />
           <main className="main">
             <Routes>
               <Route path="/" element={<Home />} />

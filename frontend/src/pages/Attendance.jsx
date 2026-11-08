@@ -4,17 +4,26 @@ import { useClub } from "../context/ClubContext";
 import { getUsers } from "../api/users";
 import { getRuns, createRun, updateRun } from "../api/runs";
 import { checkIn, checkOut, getAttendanceForRun, getAllAttendanceForClub } from "../api/attendance";
-import { createUser } from "../api/users";
 import { createRace } from "../api/races";
 import { QRCodeSVG } from "qrcode.react";
 import PageLoading from "../components/ui/PageLoading";
 import EditRunModal from "../components/ui/EditRunModal";
+import CheckInRoster from "../components/ui/CheckInRoster";
 import { checkInOrigin } from "../utils/network";
-import { nowEastern } from "../utils/datetime";
+import { easternInputToISO, nowEastern } from "../utils/datetime";
+import { pluralize } from "../utils/format";
 import { deleteRunWithConfirm } from "../utils/runActions";
 import "./Attendance.css";
 
 const RACE_DISTANCES = ["5k", "10k", "Half Marathon", "XC", "Track Meet"];
+
+function countByRun(attendance) {
+  const counts = {};
+  attendance.forEach((rec) => {
+    counts[rec.run_id] = (counts[rec.run_id] || 0) + 1;
+  });
+  return counts;
+}
 
 export default function Attendance() {
   const { club } = useClub();
@@ -28,7 +37,6 @@ export default function Attendance() {
   const [members, setMembers] = useState([]);
   const [activeRun, setActiveRun] = useState(null);
   const [attendees, setAttendees] = useState([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -49,14 +57,8 @@ export default function Attendance() {
 
   const [submitted, setSubmitted] = useState(false);
 
-  const [showAddMember, setShowAddMember] = useState(false);
-  const [newMember, setNewMember] = useState({ firstName: "", lastName: "", netId: "" });
-  const [addingMember, setAddingMember] = useState(false);
-  const [addMemberError, setAddMemberError] = useState("");
-
   const [editingRun, setEditingRun] = useState(null);
   const [runAttendeeCounts, setRunAttendeeCounts] = useState({});
-  const [sortByLastName, setSortByLastName] = useState(false);
   const [checkinError, setCheckinError] = useState("");
 
   useEffect(() => {
@@ -65,16 +67,13 @@ export default function Attendance() {
       .then(([runsData, users, attendance]) => {
         setRuns(runsData);
         setMembers(users);
-        const counts = {};
-        attendance.forEach((rec) => {
-          counts[rec.run_id] = (counts[rec.run_id] || 0) + 1;
-        });
-        setRunAttendeeCounts(counts);
+        setRunAttendeeCounts(countByRun(attendance));
         if (preselectedRunId) {
           const found = runsData.find((r) => r.id === preselectedRunId);
           if (found) setActiveRun(found);
         }
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [club, preselectedRunId]);
 
@@ -90,7 +89,7 @@ export default function Attendance() {
     setSubmitting(true);
     setCreateError("");
     try {
-      const run = await createRun({ ...newRun, club_id: club.id, is_live: true });
+      const run = await createRun({ ...newRun, date: easternInputToISO(newRun.date), club_id: club.id, is_live: true });
       setActiveRun(run);
       setRuns((prev) => [run, ...prev]);
       setStep("checkin");
@@ -112,6 +111,7 @@ export default function Attendance() {
       const race_type = distance === "Track Meet" ? "track" : "road_xc";
       const race = await createRace({
         ...newRace,
+        date: easternInputToISO(newRace.date),
         distance,
         race_type,
         club_id: club.id,
@@ -158,39 +158,11 @@ export default function Attendance() {
     }
   }
 
-  async function handleAddMember(e) {
-    e.preventDefault();
-    setAddingMember(true);
-    setAddMemberError("");
-    try {
-      const name = `${newMember.firstName.trim()} ${newMember.lastName.trim()}`;
-      const email = `${newMember.netId.trim().toLowerCase()}@nyu.edu`;
-      const user = await createUser({ name, email });
-      await checkIn(activeRun.id, user.id);
-      setMembers((prev) => [...prev, user]);
-      setAttendees((prev) => [...prev, user.id]);
-      setNewMember({ firstName: "", lastName: "", netId: "" });
-      setShowAddMember(false);
-    } catch (err) {
-      setAddMemberError(err.message || "Failed to add member.");
-    } finally {
-      setAddingMember(false);
-    }
+  async function handleMemberCreated(user) {
+    await checkIn(activeRun.id, user.id);
+    setMembers((prev) => [...prev, user]);
+    setAttendees((prev) => [...prev, user.id]);
   }
-
-  const filteredMembers = members
-    .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => {
-      if (sortByLastName) {
-        const aLast = a.name.split(" ").slice(-1)[0].toLowerCase();
-        const bLast = b.name.split(" ").slice(-1)[0].toLowerCase();
-        return aLast.localeCompare(bLast);
-      }
-      return a.name.localeCompare(b.name);
-    });
-
-  const checkedInMembers = filteredMembers.filter((m) => attendees.includes(m.id));
-  const notCheckedInMembers = filteredMembers.filter((m) => !attendees.includes(m.id));
 
   if (!club || loading) return <PageLoading />;
 
@@ -269,7 +241,7 @@ export default function Attendance() {
                               {run.notes && ` · ${run.notes}`}
                             </div>
                           </div>
-                          <span className="attendee-count">{runAttendeeCounts[run.id] || 0} <span>attendees</span></span>
+                          <span className="attendee-count">{runAttendeeCounts[run.id] || 0} <span>{pluralize(runAttendeeCounts[run.id] || 0, "attendee")}</span></span>
                           <span className="chevron">›</span>
                         </button>
                         <div className="row-actions">
@@ -349,7 +321,15 @@ export default function Attendance() {
       {step === "checkin" && activeRun && (
         <>
           <div className="checkin-header">
-            <button className="back-btn" onClick={() => setStep("select")}>← Back</button>
+            <button
+              className="back-btn"
+              onClick={() => {
+                setStep("select");
+                getAllAttendanceForClub(club.id).then((a) => setRunAttendeeCounts(countByRun(a))).catch(() => {});
+              }}
+            >
+              ← Back
+            </button>
             <div className="checkin-title-row">
               <h1 className="page-title">{activeRun.title}</h1>
               {activeRun.is_live && <span className="checkin-live-badge">● LIVE</span>}
@@ -372,9 +352,14 @@ export default function Attendance() {
               className={`summary-submit-btn${!activeRun.is_live ? " submitted" : ""}`}
               disabled={!activeRun.is_live}
               onClick={async () => {
-                await updateRun(activeRun.id, { is_live: false });
-                setSubmitted(true);
-                setTimeout(() => navigate("/"), 1500);
+                setCheckinError("");
+                try {
+                  await updateRun(activeRun.id, { is_live: false });
+                  setSubmitted(true);
+                  setTimeout(() => navigate("/"), 1500);
+                } catch (err) {
+                  setCheckinError(err.message || "Failed to submit attendance.");
+                }
               }}
             >
               <div className="summary-submit-label">
@@ -393,104 +378,13 @@ export default function Attendance() {
             />
           </div>
 
-          <div className="sort-row">
-            <span className="sort-label">Sort By:</span>
-            <button
-              className={`sort-pill ${sortByLastName ? "active" : ""}`}
-              onClick={() => setSortByLastName((v) => !v)}
-            >
-              Last Name
-            </button>
-          </div>
-
-          <div className="search-add-row">
-            <input
-              className="search-input"
-              placeholder="Search members..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <button className="add-member-btn" onClick={() => { setShowAddMember((v) => !v); setAddMemberError(""); }}>
-              {showAddMember ? "✕ Cancel" : "+ New Member"}
-            </button>
-          </div>
-
-          {showAddMember && (
-            <form className="add-member-form card" onSubmit={handleAddMember}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>First Name</label>
-                  <input
-                    required
-                    placeholder="Jane"
-                    value={newMember.firstName}
-                    onChange={(e) => setNewMember({ ...newMember, firstName: e.target.value })}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Last Name</label>
-                  <input
-                    required
-                    placeholder="Smith"
-                    value={newMember.lastName}
-                    onChange={(e) => setNewMember({ ...newMember, lastName: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Net ID</label>
-                <input
-                  required
-                  placeholder="js1234"
-                  value={newMember.netId}
-                  onChange={(e) => setNewMember({ ...newMember, netId: e.target.value })}
-                />
-              </div>
-              {addMemberError && <p className="form-error">{addMemberError}</p>}
-              <button className="btn-primary" type="submit" disabled={addingMember}>
-                {addingMember ? "Adding..." : "Add & Check In →"}
-              </button>
-            </form>
-          )}
-
-          {checkinError && <p className="form-error">{checkinError}</p>}
-
-          <div className="member-list card">
-            {filteredMembers.length === 0 ? (
-              <p className="empty-state">No members found</p>
-            ) : (
-              <>
-                {checkedInMembers.map((member) => (
-                  <div key={member.id} className="member-item checked">
-                    <div className="member-avatar">{member.name[0].toUpperCase()}</div>
-                    <div className="member-info">
-                      <div className="member-name">{member.name}</div>
-                      <div className="member-email">{member.email?.split("@")[0]}</div>
-                    </div>
-                    <button className="checkin-btn checked" onClick={() => toggleAttendance(member.id)}>
-                      ✓ Here
-                    </button>
-                  </div>
-                ))}
-                {checkedInMembers.length > 0 && notCheckedInMembers.length > 0 && (
-                  <div className="member-divider">Not yet checked in</div>
-                )}
-                {notCheckedInMembers.map((member) => (
-                  <div key={member.id} className="member-item">
-                    <div className="member-avatar">{member.name[0].toUpperCase()}</div>
-                    <div className="member-info">
-                      <div className="member-name">{member.name}</div>
-                      <div className="member-email">{member.email?.split("@")[0]}</div>
-                    </div>
-                    <button className="checkin-btn" onClick={() => toggleAttendance(member.id)}>
-                      Check In
-                    </button>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-
+          <CheckInRoster
+            members={members}
+            checkedInIds={attendees}
+            onToggle={toggleAttendance}
+            onMemberCreated={handleMemberCreated}
+            error={checkinError}
+          />
         </>
       )}
 

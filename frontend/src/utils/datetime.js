@@ -11,3 +11,16 @@ export function nowEastern() {
 export function dateToEasternInputValue(isoString) {
   return toEasternInputValue(new Date(isoString));
 }
+
+function easternOffset(date) {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "longOffset" })
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName").value;
+  return name.replace("GMT", "");
+}
+
+// Turns a datetime-local value entered as Eastern time into a timestamp with its offset.
+export function easternInputToISO(value) {
+  const estimate = easternOffset(new Date(`${value}Z`));
+  return `${value}:00${easternOffset(new Date(`${value}${estimate}`))}`;
+}

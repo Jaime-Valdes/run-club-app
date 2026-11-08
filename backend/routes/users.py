@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from postgrest.exceptions import APIError
-from database import supabase
+from database import fetch_all, supabase
 from schemas import UserCreate, UserUpdate, UserResponse
 from sheets import sync_attendance_sheet
 
@@ -26,8 +26,7 @@ def create_user(user: UserCreate):
 
 @router.get("/", response_model=list[UserResponse])
 def list_users():
-    result = supabase.table("users").select("*").execute()
-    return result.data
+    return fetch_all(lambda: supabase.table("users").select("*").order("id"))
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -43,7 +42,12 @@ def update_user(user_id: str, data: UserUpdate, background_tasks: BackgroundTask
     payload = data.model_dump(exclude_none=True)
     if not payload:
         raise HTTPException(status_code=400, detail="No fields to update")
-    result = supabase.table("users").update(payload).eq("id", user_id).execute()
+    try:
+        result = supabase.table("users").update(payload).eq("id", user_id).execute()
+    except APIError as e:
+        if e.code == "23505":
+            raise HTTPException(status_code=409, detail="Another member already uses that email.")
+        raise
     if not result.data:
         raise HTTPException(status_code=404, detail="User not found")
     background_tasks.add_task(sync_attendance_sheet)

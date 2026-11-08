@@ -25,6 +25,7 @@
   font-size: 17px;
   color: #fff;
   letter-spacing: -0.3px;
+  flex-shrink: 0;
 }
 
 .navbar-icon {
@@ -42,6 +43,7 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
+  white-space: nowrap;
   transition: all 0.15s;
 }
 
@@ -61,4 +63,11 @@
   .navbar-brand { font-size: 14px; gap: 7px; }
   .navbar-icon { height: 24px; }
   .nav-link { padding: 5px 8px; font-size: 12px; }
+}
+
+/* Too narrow for the club name and all four links on one line. */
+@media (max-width: 480px) {
+  .navbar-brand span { display: none; }
+  .navbar-links { gap: 0; }
+  .nav-link { padding: 5px 6px; }
 }

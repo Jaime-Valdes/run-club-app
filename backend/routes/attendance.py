@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from postgrest.exceptions import APIError
-from database import supabase
+from database import fetch_all, supabase
 from schemas import AttendanceCreate, AttendanceResponse, AttendanceWithUser, AttendanceWithRun
 from sheets import sync_attendance_sheet
 
@@ -75,9 +75,9 @@ def get_attendance_count(user_id: str):
 @router.get("/counts")
 def get_all_attendance_counts():
     """Get attendance counts for all users in a single query."""
-    result = supabase.table("attendance").select("user_id").execute()
+    rows = fetch_all(lambda: supabase.table("attendance").select("user_id").order("id"))
     counts = {}
-    for row in result.data:
+    for row in rows:
         uid = row["user_id"]
         counts[uid] = counts.get(uid, 0) + 1
     return counts
@@ -90,5 +90,4 @@ def get_all_attendance(club_id: str):
     run_ids = [r["id"] for r in runs_res.data]
     if not run_ids:
         return []
-    result = supabase.table("attendance").select("user_id, run_id").in_("run_id", run_ids).execute()
-    return result.data
+    return fetch_all(lambda: supabase.table("attendance").select("user_id, run_id").in_("run_id", run_ids).order("id"))

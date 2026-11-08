@@ -27,6 +27,7 @@ create table if not exists runs (
   title      text not null,
   date       timestamptz not null,
   notes      text,
+  is_live    boolean default false,
   created_by uuid,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -50,6 +51,7 @@ create table if not exists races (
   distance   text not null,  -- '5k', '10k', 'Half Marathon', 'Marathon', 'XC', 'Track Meet'
   location   text,
   notes      text,
+  is_live    boolean default false,
   created_by uuid,
   created_at timestamptz default now(),
   updated_at timestamptz default now()

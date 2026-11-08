@@ -13,7 +13,7 @@ import {
 } from "../api/races";
 import PageLoading from "../components/ui/PageLoading";
 import EditRaceModal from "../components/ui/EditRaceModal";
-import { formatTimeInput } from "../utils/format";
+import { formatTimeInput, pluralize } from "../utils/format";
 import { toggleSortMode } from "../utils/sort";
 import { deleteRaceWithConfirm } from "../utils/raceActions";
 import "./Records.css";
@@ -350,6 +350,7 @@ export default function RaceRecords() {
         const trackFlat = allTrackResultsRaw.map((tr) => ({ ...tr, races: raceMap[tr.race_id] }));
         setAllTrackFlat(trackFlat);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [club]);
 
@@ -782,7 +783,7 @@ export default function RaceRecords() {
                       </div>
                       <div className="record-sub">{member.email}</div>
                     </div>
-                    <div className="record-count">{count} <span>races</span></div>
+                    <div className="record-count">{count} <span>{pluralize(count, "race")}</span></div>
                     <span className="chevron">›</span>
                   </div>
                 );
@@ -873,7 +874,7 @@ export default function RaceRecords() {
                       {race.location && ` · ${race.location}`}
                     </div>
                   </div>
-                  <span className="attendee-count">{raceAttendeeCounts[race.id] || 0} <span>attendees</span></span>
+                  <span className="attendee-count">{raceAttendeeCounts[race.id] || 0} <span>{pluralize(raceAttendeeCounts[race.id] || 0, "attendee")}</span></span>
                   <span className="chevron">›</span>
                 </button>
                 <div className="row-actions">

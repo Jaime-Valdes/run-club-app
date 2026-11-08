@@ -39,7 +39,7 @@ def get_run(run_id: str):
 
 @router.patch("/{run_id}", response_model=RunResponse)
 def update_run(run_id: str, data: RunUpdate):
-    updates = data.model_dump(exclude_none=True)
+    updates = data.model_dump(mode="json", exclude_none=True)
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
     result = supabase.table("runs").update(updates).eq("id", run_id).execute()

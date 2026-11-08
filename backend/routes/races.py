@@ -1,6 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from typing import Any
-from database import supabase
+from postgrest.exceptions import APIError
+from database import fetch_all, supabase
 from schemas import RaceCreate, RaceUpdate, RaceResponse, RaceResultCreate, RaceResultResponse, TrackResultCreate, TrackResultResponse
 from sheets import sync_attendance_sheet
 
@@ -37,8 +38,7 @@ def get_all_race_results(club_id: str):
     race_ids = [r["id"] for r in races_res.data]
     if not race_ids:
         return []
-    result = supabase.table("race_results").select("user_id, race_id, time_display").in_("race_id", race_ids).execute()
-    return result.data
+    return fetch_all(lambda: supabase.table("race_results").select("user_id, race_id, time_display").in_("race_id", race_ids).order("id"))
 
 
 @router.get("/all-track-results", response_model=list[Any])
@@ -48,13 +48,12 @@ def get_all_track_results(club_id: str):
     race_ids = [r["id"] for r in races_res.data]
     if not race_ids:
         return []
-    result = supabase.table("track_results").select("user_id, race_id, event, result_display").in_("race_id", race_ids).execute()
-    return result.data
+    return fetch_all(lambda: supabase.table("track_results").select("user_id, race_id, event, result_display").in_("race_id", race_ids).order("id"))
 
 
 @router.patch("/{race_id}", response_model=RaceResponse)
 def update_race(race_id: str, data: RaceUpdate):
-    updates = data.model_dump(exclude_none=True)
+    updates = data.model_dump(mode="json", exclude_none=True)
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
     result = supabase.table("races").update(updates).eq("id", race_id).execute()
@@ -77,6 +76,23 @@ def delete_race(race_id: str, background_tasks: BackgroundTasks):
     if not result.data:
         raise HTTPException(status_code=404, detail="Race not found")
     background_tasks.add_task(sync_attendance_sheet)
+
+
+@router.post("/{race_id}/check-in", response_model=RaceResultResponse, status_code=201)
+def check_in(race_id: str, body: RaceResultCreate, background_tasks: BackgroundTasks):
+    """Insert-only, unlike save_result: a repeat check-in must not clear a recorded time."""
+    data = body.model_dump(mode="json")
+    data["race_id"] = race_id
+    try:
+        result = supabase.table("race_results").insert(data).execute()
+    except APIError as e:
+        if e.code == "23505":
+            raise HTTPException(status_code=409, detail="Member already checked in")
+        raise
+    if not result.data:
+        raise HTTPException(status_code=400, detail="Failed to check in")
+    background_tasks.add_task(sync_attendance_sheet)
+    return result.data[0]
 
 
 @router.post("/{race_id}/results", response_model=RaceResultResponse, status_code=201)
@@ -107,7 +123,9 @@ def get_results(race_id: str):
 
 @router.delete("/{race_id}/results/{user_id}", status_code=204)
 def delete_result(race_id: str, user_id: str, background_tasks: BackgroundTasks):
-    supabase.table("race_results").delete().eq("race_id", race_id).eq("user_id", user_id).execute()
+    result = supabase.table("race_results").delete().eq("race_id", race_id).eq("user_id", user_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Member already checked out")
     background_tasks.add_task(sync_attendance_sheet)
 
 

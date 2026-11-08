@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { updateRun } from "../../api/runs";
-import { dateToEasternInputValue } from "../../utils/datetime";
+import { dateToEasternInputValue, easternInputToISO } from "../../utils/datetime";
 import "./Modal.css";
 
 export default function EditRunModal({ run, onClose, onSaved }) {
@@ -17,7 +17,7 @@ export default function EditRunModal({ run, onClose, onSaved }) {
     setSaving(true);
     setError("");
     try {
-      const updated = await updateRun(run.id, form);
+      const updated = await updateRun(run.id, { ...form, date: easternInputToISO(form.date) });
       onSaved(updated);
       onClose();
     } catch (err) {

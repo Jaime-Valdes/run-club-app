@@ -3,13 +3,19 @@ import * as XLSX from "xlsx";
 import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { getUsers } from "../api/users";
-import { getRace, getResults, saveResult, deleteResult, updateRace } from "../api/races";
+import { getRace, getResults, checkInToRace, saveResult, deleteResult, updateRace } from "../api/races";
+import { useServerDown } from "../api/serverStatus";
 import PageLoading from "../components/ui/PageLoading";
+import CheckInRoster from "../components/ui/CheckInRoster";
 import { formatTimeInput } from "../utils/format";
 import { checkInOrigin } from "../utils/network";
 import "./RaceDetail.css";
 
 const TYPE_LABELS = { road_xc: "Road / XC", track: "Track" };
+
+function toResultMap(resultsList) {
+  return Object.fromEntries(resultsList.map((r) => [r.user_id, r]));
+}
 
 export default function RaceDetail() {
   const { raceId } = useParams();
@@ -20,37 +26,48 @@ export default function RaceDetail() {
   const [results, setResults] = useState({});   // { userId: resultObj }
   const [timeInputs, setTimeInputs] = useState({}); // { userId: string }
   const [saving, setSaving] = useState({});
-  const [search, setSearch] = useState("");
-  const [showAll, setShowAll] = useState(true);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
+  const [checkinError, setCheckinError] = useState("");
+  const serverDown = useServerDown();
 
   useEffect(() => {
     Promise.all([getRace(raceId), getUsers(), getResults(raceId)])
       .then(([raceData, users, resultsList]) => {
         setRace(raceData);
         setMembers(users);
-        const map = {};
-        resultsList.forEach((r) => { map[r.user_id] = r; });
-        setResults(map);
+        setResults(toResultMap(resultsList));
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [raceId]);
 
-  async function handleCheckIn(userId) {
-    setSaving((s) => ({ ...s, [userId]: true }));
+  async function toggleAttendance(userId) {
+    const existing = results[userId];
+    if (existing?.time_display && !window.confirm("Remove this check-in? The recorded finish time will be deleted too.")) return;
+    setCheckinError("");
     try {
-      const saved = await saveResult(raceId, { race_id: raceId, user_id: userId, time_display: null });
-      setResults((prev) => ({ ...prev, [userId]: saved }));
-    } finally {
-      setSaving((s) => ({ ...s, [userId]: false }));
+      if (existing) {
+        await deleteResult(raceId, userId);
+        setResults((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+        setTimeInputs((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+      } else {
+        const saved = await checkInToRace(raceId, userId);
+        setResults((prev) => ({ ...prev, [userId]: saved }));
+      }
+    } catch (err) {
+      // Someone else (usually a QR self check-in) got there first, so resync the list.
+      if (err.message === "Member already checked in" || err.message === "Member already checked out") {
+        getResults(raceId).then((list) => setResults(toResultMap(list))).catch(() => {});
+      }
+      setCheckinError(err.message || "Failed to update attendance.");
     }
   }
 
-  async function handleCheckOut(userId) {
-    await deleteResult(raceId, userId);
-    setResults((prev) => { const next = { ...prev }; delete next[userId]; return next; });
-    setTimeInputs((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+  async function handleMemberCreated(user) {
+    const saved = await checkInToRace(raceId, user.id);
+    setMembers((prev) => [...prev, user]);
+    setResults((prev) => ({ ...prev, [user.id]: saved }));
   }
 
   async function handleSaveTime(userId) {
@@ -61,9 +78,48 @@ export default function RaceDetail() {
       const saved = await saveResult(raceId, { race_id: raceId, user_id: userId, time_display: time });
       setResults((prev) => ({ ...prev, [userId]: saved }));
       setTimeInputs((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+    } catch (err) {
+      setCheckinError(err.message || "Failed to save time.");
     } finally {
       setSaving((s) => ({ ...s, [userId]: false }));
     }
+  }
+
+  function renderTimeControls(member) {
+    const result = results[member.id];
+    const isSaving = saving[member.id];
+    return (
+      <div className="race-time-cell">
+        {member.id in timeInputs ? (
+          <div className="time-entry">
+            <input
+              className="time-input"
+              placeholder="16:54"
+              autoFocus
+              value={timeInputs[member.id]}
+              onChange={(e) => setTimeInputs((p) => ({ ...p, [member.id]: formatTimeInput(e.target.value) }))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveTime(member.id);
+                if (e.key === "Escape") setTimeInputs((p) => { const n = { ...p }; delete n[member.id]; return n; });
+              }}
+            />
+            <button className="time-save-btn" onClick={() => handleSaveTime(member.id)} disabled={isSaving}>
+              {isSaving ? "…" : "Save"}
+            </button>
+            <button className="time-cancel-btn" onClick={() => setTimeInputs((p) => { const n = { ...p }; delete n[member.id]; return n; })}>✕</button>
+          </div>
+        ) : result.time_display ? (
+          <div className="time-saved">
+            <span className="time-display">{result.time_display}</span>
+            <button className="time-edit-btn" onClick={() => setTimeInputs((p) => ({ ...p, [member.id]: result.time_display }))}>Edit</button>
+          </div>
+        ) : (
+          <button className="add-time-btn" onClick={() => setTimeInputs((p) => ({ ...p, [member.id]: "" }))}>
+            + Time
+          </button>
+        )}
+      </div>
+    );
   }
 
   function exportRace() {
@@ -85,13 +141,9 @@ export default function RaceDetail() {
     XLSX.writeFile(wb, `${safeName}-results.xlsx`);
   }
 
-  const attending = Object.keys(results).length;
+  const checkedInIds = Object.keys(results);
 
-  const filtered = members
-    .filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
-    .filter((m) => showAll || results[m.id]);
-
-  if (loading) return <PageLoading />;
+  if (loading || (!race && serverDown)) return <PageLoading />;
   if (!race) return <div className="page-loading">Race not found.</div>;
 
   return (
@@ -116,19 +168,24 @@ export default function RaceDetail() {
         </div>
       </div>
 
-      <div className="race-summary-bar">
-        <div className="race-summary-stat">
-          <div className="race-summary-value">{attending}</div>
-          <div className="race-summary-label">Attending</div>
+      <div className="attendance-summary">
+        <div className="summary-stat">
+          <div className="summary-value">{checkedInIds.length}</div>
+          <div className="summary-label">Checked In</div>
         </div>
-        <div className="race-summary-divider" />
+        <div className="summary-divider" />
         <button
           className={`summary-submit-btn${!race.is_live ? " submitted" : ""}`}
           disabled={!race.is_live}
           onClick={async () => {
-            await updateRace(raceId, { is_live: false });
-            setSubmitted(true);
-            setTimeout(() => navigate("/"), 1500);
+            setCheckinError("");
+            try {
+              await updateRace(raceId, { is_live: false });
+              setSubmitted(true);
+              setTimeout(() => navigate("/"), 1500);
+            } catch (err) {
+              setCheckinError(err.message || "Failed to submit attendance.");
+            }
           }}
         >
           <div className="summary-submit-label">
@@ -147,94 +204,17 @@ export default function RaceDetail() {
         />
       </div>
 
-      <div className="race-filter-row">
-        <button className={`filter-pill ${showAll ? "active" : ""}`} onClick={() => setShowAll(true)}>
-          All Members
-        </button>
-        <button className={`filter-pill ${!showAll ? "active" : ""}`} onClick={() => setShowAll(false)}>
-          Attending ({attending})
-        </button>
-        {attending > 0 && (
+      <CheckInRoster
+        members={members}
+        checkedInIds={checkedInIds}
+        onToggle={toggleAttendance}
+        onMemberCreated={handleMemberCreated}
+        error={checkinError}
+        renderCheckedExtra={renderTimeControls}
+        toolbar={checkedInIds.length > 0 && (
           <button className="export-btn" onClick={exportRace}>⬇ Export results</button>
         )}
-      </div>
-
-      <input
-        className="search-input"
-        placeholder="Search members..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
       />
-
-      <div className="card">
-        {filtered.length === 0 ? (
-          <p className="empty-state">{showAll ? "No members found" : "No one checked in yet"}</p>
-        ) : (
-          filtered.map((member) => {
-            const result = results[member.id];
-            const isEditing = member.id in timeInputs;
-            const isSaving = saving[member.id];
-            const attending = !!result;
-
-            return (
-              <div key={member.id} className={`result-row ${attending ? "attending" : ""}`}>
-                <div className={`member-avatar ${attending ? "attending-avatar" : ""}`}>
-                  {member.name[0].toUpperCase()}
-                </div>
-                <div className="result-info">
-                  <div className="result-name">{member.name}</div>
-                </div>
-
-                <div className="result-actions">
-                  {!attending ? (
-                    <button
-                      className="checkin-pill"
-                      onClick={() => handleCheckIn(member.id)}
-                      disabled={isSaving}
-                    >
-                      {isSaving ? "..." : "Check In"}
-                    </button>
-                  ) : (
-                    <>
-                      {isEditing ? (
-                        <div className="time-entry">
-                          <input
-                            className="time-input"
-                            placeholder="16:54"
-                            autoFocus
-                            value={timeInputs[member.id]}
-                            onChange={(e) => setTimeInputs((p) => ({ ...p, [member.id]: formatTimeInput(e.target.value) }))}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveTime(member.id);
-                              if (e.key === "Escape") setTimeInputs((p) => { const n = { ...p }; delete n[member.id]; return n; });
-                            }}
-                          />
-                          <button className="time-save-btn" onClick={() => handleSaveTime(member.id)} disabled={isSaving}>
-                            {isSaving ? "…" : "Save"}
-                          </button>
-                          <button className="time-cancel-btn" onClick={() => setTimeInputs((p) => { const n = { ...p }; delete n[member.id]; return n; })}>✕</button>
-                        </div>
-                      ) : result.time_display ? (
-                        <div className="time-saved">
-                          <span className="time-display">{result.time_display}</span>
-                          <button className="time-edit-btn" onClick={() => setTimeInputs((p) => ({ ...p, [member.id]: result.time_display }))}>Edit</button>
-                        </div>
-                      ) : (
-                        <button className="add-time-btn" onClick={() => setTimeInputs((p) => ({ ...p, [member.id]: "" }))}>
-                          + Time
-                        </button>
-                      )}
-                      <span className="checked-badge">✓</span>
-                      <button className="checkout-btn" onClick={() => handleCheckOut(member.id)} title="Remove">✕</button>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
     </div>
   );
 }

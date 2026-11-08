@@ -4,11 +4,13 @@ import { useClub } from "../context/ClubContext";
 import { getRuns } from "../api/runs";
 import { getRaces, getAllResultsForClub } from "../api/races";
 import { getAllAttendanceForClub } from "../api/attendance";
+import { useServerDown } from "../api/serverStatus";
 import PageLoading from "../components/ui/PageLoading";
 import EditRunModal from "../components/ui/EditRunModal";
 import EditRaceModal from "../components/ui/EditRaceModal";
 import { deleteRunWithConfirm } from "../utils/runActions";
 import { deleteRaceWithConfirm } from "../utils/raceActions";
+import { pluralize } from "../utils/format";
 import logo from "../assets/logo.svg";
 import "./Home.css";
 
@@ -20,6 +22,7 @@ export default function Home() {
   const [editingRun, setEditingRun] = useState(null);
   const [editingRace, setEditingRace] = useState(null);
   const [attendeeCounts, setAttendeeCounts] = useState({});
+  const serverDown = useServerDown();
 
   useEffect(() => {
     if (!club) return;
@@ -63,7 +66,7 @@ export default function Home() {
     }
   }
 
-  if (clubLoading) return <PageLoading />;
+  if (clubLoading || (!club && serverDown)) return <PageLoading />;
 
   if (!club) {
     return (
@@ -108,7 +111,7 @@ export default function Home() {
                   {item.type === "race" && item.distance && ` · ${item.distance}`}
                 </div>
               </div>
-              <span className="attendee-count">{attendeeCounts[item.id] || 0} <span>attendees</span></span>
+              <span className="attendee-count">{attendeeCounts[item.id] || 0} <span>{pluralize(attendeeCounts[item.id] || 0, "attendee")}</span></span>
               <div className="live-card-cta">Join →</div>
               <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                 <button
@@ -158,7 +161,7 @@ export default function Home() {
                     {item.type === "race" && item.distance && ` · ${item.distance}`}
                   </div>
                 </div>
-                <span className="attendee-count">{attendeeCounts[item.id] || 0} <span>attendees</span></span>
+                <span className="attendee-count">{attendeeCounts[item.id] || 0} <span>{pluralize(attendeeCounts[item.id] || 0, "attendee")}</span></span>
                 <span className="session-chevron">›</span>
                 <div className="row-actions" onClick={(e) => e.stopPropagation()}>
                   <button

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getUsers } from "../api/users";
 import { getRun } from "../api/runs";
-import { getRace, getResults, saveResult } from "../api/races";
+import { getRace, getResults, checkInToRace } from "../api/races";
 import { checkIn, getAttendanceForRun } from "../api/attendance";
 import PageLoading from "../components/ui/PageLoading";
 import "./SelfCheckIn.css";
@@ -60,7 +60,7 @@ export default function SelfCheckIn() {
     try {
       if (!checkedInIds.has(member.id)) {
         if (mode === "race") {
-          await saveResult(raceId, { race_id: raceId, user_id: member.id, time_display: null });
+          await checkInToRace(raceId, member.id);
         } else {
           await checkIn(runId, member.id);
         }

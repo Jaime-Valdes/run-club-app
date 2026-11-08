@@ -1,3 +1,5 @@
+import { requestFinished, requestStarted } from "./serverStatus";
+
 const BASE_URL = import.meta.env.VITE_API_URL || "";
 const REQUEST_TIMEOUT_MS = 90_000;
 
@@ -5,6 +7,7 @@ async function request(path, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  requestStarted();
   let res;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
@@ -13,13 +16,16 @@ async function request(path, options = {}) {
       ...options,
     });
   } catch (err) {
+    requestFinished(true);
     if (err.name === "AbortError") {
-      throw new Error("The server is taking too long to respond. Please try again in a moment.");
+      throw new Error("The server is taking too long to respond. Please try again in a moment.", { cause: err });
     }
-    throw err;
+    throw new Error("Can't reach the server. Please try again in a moment.", { cause: err });
   } finally {
     clearTimeout(timeout);
   }
+
+  requestFinished(res.status >= 500);
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));

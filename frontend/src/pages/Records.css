@@ -526,6 +526,12 @@
 
 .chart-tooltip-time.pr { color: var(--success); }
 
+.chart-tooltip-breakdown {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
 .pr-chart-legend {
   display: flex;
   gap: 16px;

@@ -3,6 +3,7 @@ import { api } from "./client";
 export const createRace = (data) => api.post("/races/", data);
 export const getRaces = (clubId) => api.get(`/races/?club_id=${clubId}`);
 export const getRace = (raceId) => api.get(`/races/${raceId}`);
+export const checkInToRace = (raceId, userId) => api.post(`/races/${raceId}/check-in`, { race_id: raceId, user_id: userId });
 export const saveResult = (raceId, data) => api.post(`/races/${raceId}/results`, data);
 export const getResults = (raceId) => api.get(`/races/${raceId}/results`);
 export const deleteResult = (raceId, userId) => api.delete(`/races/${raceId}/results/${userId}`);
